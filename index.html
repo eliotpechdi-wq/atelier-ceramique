@@ -182,6 +182,11 @@ fieldset:disabled{opacity:.5}
 .hero .k-value{font-size:44px;font-weight:600;line-height:1.05;letter-spacing:-.02em}
 .hero .k-sub{font-size:13px;color:var(--muted)}
 .tone-good{color:var(--good)} .tone-bad{color:var(--bad)}
+.mode-toggle{display:inline-flex;align-self:flex-start;margin-top:10px;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden;max-width:100%}
+.mode-toggle button{border:0;background:var(--panel);padding:6px 11px;font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer}
+.mode-note{margin:8px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.4;max-width:46ch}
+.mode-toggle button + button{border-left:1px solid var(--line-strong)}
+.mode-toggle button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
 .kpi{display:flex;flex-direction:column;gap:1px;min-width:0}
 .kpi .k-label{font-size:12px;color:var(--ink-2);font-weight:500}
@@ -298,6 +303,7 @@ table.pl tr.note th,table.pl tr.note td{color:var(--muted);font-size:12.5px}
         <div class="group">
           <h2>Vos pièces</h2>
           <p class="intro">Les dimensions sont celles de la pièce finie, après cuisson. Le simulateur en déduit l'argile à tourner (retrait compris), la surface à émailler et la place prise dans le four. Les dessins sont tous à la même échelle.</p>
+          <p class="intro">Le temps de travail n’est pas un coût : il sert à vérifier que vos heures suffisent. Un poids cru imposé à 0 laisse le simulateur le calculer. En mode « Ma capacité maximale », les ventes par mois ne servent plus qu’à répartir la production entre les pièces.</p>
           <div class="add-row"><span class="lbl">Ajouter :</span>
             <button class="btn" type="button" data-add-piece="mug">Mug</button>
             <button class="btn" type="button" data-add-piece="bol">Bol</button>
@@ -311,7 +317,7 @@ table.pl tr.note th,table.pl tr.note td{color:var(--muted);font-size:12.5px}
 
       <div class="panel" role="tabpanel" id="panel-terre" aria-labelledby="tab-terre" hidden>
         <div class="group"><h2>Argile</h2><p class="intro">Changer de type de terre ajuste le prix, le retrait, la casse et l'énergie de la cuisson d'émail.</p><div class="fields" id="f-argile"></div></div>
-        <div class="group"><h2>Casse</h2><p class="intro">Part des pièces perdues à chaque étape. Une pièce cassée crue se recycle ; après le biscuit, elle est perdue avec l'énergie déjà dépensée.</p><div class="fields" id="f-casse"></div></div>
+        <div class="group"><h2>Casse</h2><p class="intro">Part des pièces perdues à chaque étape, 90 % au plus. Une pièce cassée crue se recycle ; après le biscuit, elle est perdue avec l'énergie déjà dépensée.</p><div class="fields" id="f-casse"></div></div>
         <div class="group"><h2>Émail et pigments</h2><p class="intro">Le dépôt correspond à l'émail sec qui reste sur la pièce. Au trempage, comptez 0,04 à 0,08 g/cm².</p><div class="fields" id="f-email"></div>
           <div id="recipe-block">
             <p class="sub-h">Recette maison · base (en parts)</p>
@@ -329,7 +335,7 @@ table.pl tr.note th,table.pl tr.note td{color:var(--muted);font-size:12.5px}
       <div class="panel" role="tabpanel" id="panel-four" aria-labelledby="tab-four" hidden>
         <div class="group"><h2>Four électrique</h2><p class="intro">Choisir un modèle remplit le volume, la puissance, le prix, l'énergie et la durée des cuissons. Changer le volume à la main recalcule l'énergie et l'usure.</p><div class="fields" id="f-four"></div></div>
         <div class="group"><h2>Chargement et cuissons</h2><p class="intro">Le taux de chargement tient compte des piliers, des plaques et des vides : 55 à 70 % du volume intérieur est réellement occupé.</p><div class="fields" id="f-charge"></div></div>
-        <div class="group"><h2>Électricité</h2><p class="intro">Tarif réglementé option Base : 0,2001 €/kWh depuis le 1<sup>er</sup> août 2026. En heures pleines / heures creuses : 0,2142 et 0,1589 €/kWh.</p><div class="fields" id="f-elec"></div><p class="f-hint" id="elec-advice" style="margin-top:10px"></p></div>
+        <div class="group"><h2>Électricité</h2><p class="intro">Tarif réglementé option Base : 0,2001 €/kWh depuis le 1<sup>er</sup> août 2026. En heures pleines / heures creuses : 0,2142 et 0,1589 €/kWh. Repère de consommation : un four de 60 L consomme environ 18 kWh au biscuit et 30 kWh à l’émail de grès.</p><div class="fields" id="f-elec"></div><p class="f-hint" id="elec-advice" style="margin-top:10px"></p></div>
         <div class="group"><h2>Usure du four</h2><p class="intro">Coût réparti sur chaque cuisson. Un biscuit use environ 40 % d'une cuisson haute température ; une cuisson de faïence, la moitié.</p><div class="fields" id="f-usure"></div></div>
       </div>
 
@@ -360,6 +366,11 @@ table.pl tr.note th,table.pl tr.note td{color:var(--muted);font-size:12.5px}
         <span class="k-label">Résultat mensuel</span>
         <span class="k-value" id="k-result"></span>
         <span class="k-sub" id="k-result-sub"></span>
+        <div class="mode-toggle" role="group" aria-label="Volume de production pris en compte">
+          <button type="button" data-mode="prevu" aria-pressed="true">Mes ventes prévues</button>
+          <button type="button" data-mode="max" aria-pressed="false">Ma capacité maximale</button>
+        </div>
+        <p class="mode-note" id="mode-note"></p>
       </div>
       <div class="kpis" id="kpis"></div>
       <div class="meters" id="meters"></div>
@@ -423,23 +434,12 @@ table.pl tr.note th,table.pl tr.note td{color:var(--muted);font-size:12.5px}
 <div class="tip" id="tip" hidden></div>
 
 <script>
-(() => {
+/* Moteur de calcul : aucune dépendance au navigateur. Exposé sous window.AtelierCalc (ou globalThis.AtelierCalc hors navigateur). */
+(function (root) {
 'use strict';
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const round = (x, d = 0) => { const k = Math.pow(10, d); return Math.round(x * k) / k; };
-
-const NF0 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 0});
-const NF1 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 1});
-const E0 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0, minimumFractionDigits: 0});
-const E2 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 2, minimumFractionDigits: 2});
-const eur = (x, d) => { if (x == null || !isFinite(x)) return '—'; const useTwo = d === 2 || (d == null && Math.abs(x) < 100); return (useTwo ? E2 : E0).format(x).replace('-', '−'); };
-const n0 = x => isFinite(x) ? NF0.format(x).replace('-', '−') : '—';
-const n1 = x => isFinite(x) ? NF1.format(x).replace('-', '−') : '—';
-const pct = x => isFinite(x) ? NF0.format(x * 100) + ' %' : '—';
 let seq = 0;
 const uid = p => p + Date.now().toString(36) + (++seq).toString(36);
 
@@ -461,7 +461,7 @@ const KILNS = {
 };
 const KVA = [[6,15.95],[9,20.0],[12,24.1],[15,28.0],[18,31.9],[24,40.3],[30,48.0],[36,56.4]];
 const aboFor = kw => { const need = kw + 3; const row = KVA.find(r => r[0] >= need) || KVA[KVA.length - 1]; return {kva: row[0], surcout: round(row[1] - KVA[0][1], 1), over: need > 36}; };
-const kwhBase = v => 1.40 * Math.pow(Math.max(v, 1), 0.85);
+const kwhBase = v => 2.73 * Math.pow(Math.max(v, 1), 0.585);   // cuisson d'émail grès : ≈ 30 kWh pour 60 L, 45 kWh pour 120 L
 
 const MAT_BASE = [
   ['Feldspath potassique', 2.2], ['Feldspath sodique', 2.2], ['Néphéline syénite', 2.6], ['Silice (quartz)', 1.4],
@@ -543,7 +543,7 @@ function applyClay(S, key) {
 function makeState(key) {
   const sc = SCENARIOS[key];
   const S = {
-    v: 1, scenario: key, dirty: false,
+    v: 1, v2: true, scenario: key, dirty: false,
     pieces: sc.pieces.map(([t, qte, prix]) => ({id: uid('p'), ...PIECE_T[t], qte, prix})),
     argile: {type: 'gres', prix: 1.3, retrait: 12, densite: 1.95, surplus: 30, recup: 80},
     casse: {cru: 5, biscuit: 3, email: 6},
@@ -552,9 +552,9 @@ function makeState(key) {
       ajouts: [['Oxyde de fer rouge', 3, 12], ['Oxyde de cobalt', 1, 180]].map(([nom, part, prix]) => ({id: uid('m'), nom, part, prix}))},
     four: {preset: sc.kiln, volume: 100, puissance: 9, prix: 6400, vie: 10, remplissage: 60, empilement: 1.8, jeu: 1, plaque: 1.5, kwhB: 40, kwhE: 70, cycleB: 22, cycleE: 34, jours: 26},
     elec: {prix: 0.2001, prixHC: 0.1589, partHC: 0, abo: 0},
-    usure: {resistPrix: 600, resistVie: 200, thermoPrix: 90, thermoVie: 150, plaques: 1.5},
+    usure: {resistPrix: 600, resistVie: 120, thermoPrix: 90, thermoVie: 100, plaques: 1.5},
     cours: {actif: sc.cours, seances: 16, eleves: 7, prix: 38, duree: 3, argileKg: 1.2, pieces: 1, vol: 1.4, emailG: 40, conso: 0.6},
-    temps: {heures: sc.heures},
+    temps: {heures: sc.heures, mode: 'prevu'},
     charges: {consommables: sc.conso, autres: 0, prel: 0},
     equip: sc.equip.map(([nom, prix, qte, amort]) => ({id: uid('e'), nom, prix, qte, amort, actif: true})),
   };
@@ -562,19 +562,10 @@ function makeState(key) {
   return S;
 }
 
-const STORE = 'atelier-ceramique-v1';
-let state;
-try { const raw = localStorage.getItem(STORE); if (raw) { const s = JSON.parse(raw); if (s && s.v === 1 && Array.isArray(s.pieces)) state = s; } } catch (e) {}
-if (!state) state = makeState('pro');
-let saveT;
-const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }, 300); };
-const getPath = (o, p) => p.split('.').reduce((a, k) => a == null ? a : a[k], o);
-const setPath = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a, k) => a[k], o); t[last] = v; };
-
 /* ---------- Calcul ---------- */
 function recipeCost(E) {
   let parts = 0, cost = 0;
-  for (const r of [...E.base, ...E.ajouts]) { const pa = Math.max(0, num(r.part)); parts += pa; cost += pa * num(r.prix); }
+  for (const r of [...E.base, ...E.ajouts]) { const pa = Math.max(0, num(r.part)); parts += pa; cost += pa * Math.max(0, num(r.prix)); }
   return parts > 0 ? cost / parts : 0;
 }
 const emailPrice = S => S.email.mode === 'maison' ? recipeCost(S.email) : Math.max(0, num(S.email.prixCommerce));
@@ -604,20 +595,22 @@ function compute(S, scale = 1) {
   const recup = clamp(num(A.recup) / 100, 0, 1), surplus = Math.max(0, num(A.surplus) / 100);
   const prixA = Math.max(0, num(A.prix)), prixE = emailPrice(S);
   const hc = clamp(num(L.partHC) / 100, 0, 1);
-  const kwhP = num(L.prix) * (1 - hc) + num(L.prixHC) * hc;
+  const pos = v => Math.max(0, num(v));
+  const kwhP = pos(L.prix) * (1 - hc) + pos(L.prixHC) * hc;
   const useful = Math.max(0.5, num(F.volume) * clamp(num(F.remplissage) / 100, 0.05, 1));
   const emp = Math.max(1, num(F.empilement));
-  const wearHT = (num(U.resistVie) > 0 ? num(U.resistPrix) / num(U.resistVie) : 0) + (num(U.thermoVie) > 0 ? num(U.thermoPrix) / num(U.thermoVie) : 0);
-  const perB = {elec: num(F.kwhB) * kwhP, wear: 0.4 * wearHT + num(U.plaques)};
-  const perE = {elec: num(F.kwhE) * kwhP, wear: clay.wear * wearHT + num(U.plaques)};
+  const wearHT = (num(U.resistVie) > 0 ? pos(U.resistPrix) / num(U.resistVie) : 0) + (num(U.thermoVie) > 0 ? pos(U.thermoPrix) / num(U.thermoVie) : 0);
+  const perB = {elec: pos(F.kwhB) * kwhP, wear: 0.4 * wearHT + pos(U.plaques)};
+  const perE = {elec: pos(F.kwhE) * kwhP, wear: clay.wear * wearHT + pos(U.plaques)};
   const kE = 1 / (1 - cE), kB = kE / (1 - cB), kR = kB / (1 - cC);
 
   const rows = S.pieces.map(p => {
     const g = geom(p, S);
-    const q = Math.max(0, num(p.qte)) * scale;
+    const noFit = g.vol > useful + 1e-9;
+    const q = noFit ? 0 : Math.max(0, num(p.qte)) * scale;
     const kgFull = g.wet / 1000 * (1 + surplus * (1 - recup));
     const kgRawLoss = g.wet / 1000 * (1 + surplus) * (1 - recup);
-    return {p, g, q,
+    return {p, g, q, noFit,
       clayPer: (kB * kgFull + (kR - kB) * kgRawLoss) * prixA,
       glazePer: kE * g.glazeG / 1000 * prixE,
       decorPer: kE * Math.max(0, num(p.decor)),
@@ -645,7 +638,7 @@ function compute(S, scale = 1) {
   const rB = volB > 1e-9 ? {elec: elecB / volB, wear: wearB / volB} : {elec: perB.elec / useful, wear: perB.wear / useful};
   const rE = volE > 1e-9 ? {elec: elecE / volE, wear: wearE / volE} : {elec: perE.elec / useful, wear: perE.wear / useful};
 
-  const amortFour = num(F.vie) > 0 ? num(F.prix) / num(F.vie) / 12 : 0;
+  const amortFour = num(F.vie) > 0 ? pos(F.prix) / num(F.vie) / 12 : 0;
   let amortEq = 0, invEq = 0, stock = 0;
   for (const e of S.equip) { if (!e.actif) continue; const t = Math.max(0, num(e.prix)) * Math.max(0, num(e.qte)); if (num(e.amort) > 0) { invEq += t; amortEq += t / num(e.amort) / 12; } else stock += t; }
   const fConso = Math.max(0, num(CH.consommables)), fAbo = Math.max(0, num(L.abo)), fAutres = Math.max(0, num(CH.autres));
@@ -700,33 +693,101 @@ function compute(S, scale = 1) {
 }
 
 function analyze(S) {
-  const R = compute(S, 1);
-  const Q = R.qTot;
-  R.capFour = null; R.capTemps = null; R.breakEven = null; R.curve = null;
+  const P = compute(S, 1);
+  const Q = P.qTot;
+  const SMAX = 4096;
+  let capFour = null, capTemps = null, scale = 1, limit = null, noLimit = false;
   if (Q > 0) {
     const occAt = s => compute(S, s).occ;
-    if (occAt(0) > 1) R.capFour = 0;
+    let fourSansLimite = false;
+    if (occAt(0) > 1) capFour = 0;
     else {
       let lo = 0, hi = 1;
-      while (occAt(hi) <= 1 && hi < 4096) { lo = hi; hi *= 2; }
-      for (let i = 0; i < 36; i++) { const mid = (lo + hi) / 2; if (occAt(mid) <= 1) lo = mid; else hi = mid; }
-      R.capFour = lo * Q;
+      while (occAt(hi) <= 1 && hi < SMAX) { lo = hi; hi *= 2; }
+      if (hi >= SMAX && occAt(hi) <= 1) { lo = hi; fourSansLimite = true; }
+      else for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (occAt(mid) <= 1) lo = mid; else hi = mid; }
+      capFour = Math.floor(lo * Q + 1e-6);   // pièces entières : jamais une cuisson ouverte pour une fraction de pièce
     }
-    R.capTemps = R.prodHours > 0 ? Math.max(0, (R.hoursAvail - R.coursHours) / R.prodHours) * Q : Infinity;
-    const capMin = Math.min(R.capFour, R.capTemps);
-    let xMax = Math.max(Q * 1.8, Math.min(isFinite(capMin) ? capMin * 1.2 : Q * 2, Q * 4));
+    capTemps = P.prodHours > 0 ? Math.floor(Math.max(0, (P.hoursAvail - P.coursHours) / P.prodHours) * Q + 1e-6) : Infinity;
+    const capMin = Math.min(capFour, capTemps);
+    const who = capTemps <= capFour ? 'temps' : 'four';
+    if (S.temps.mode === 'max') {
+      if (fourSansLimite && !isFinite(capTemps)) noLimit = true;
+      else { scale = capMin / Q; limit = who; }
+    } else if (capMin < Q - 1e-9) { scale = capMin / Q; limit = who; }
+  }
+  const R = scale === 1 ? P : compute(S, scale);
+  Object.assign(R, {plan: P, scale, limit, noLimit, mode: S.temps.mode === 'max' ? 'max' : 'prevu',
+    capFour, capTemps, breakEven: null, beBeyond: false, curve: null});
+  const C0 = compute(S, 0);
+  R.coursOverTime = P.coursOn && P.coursHours > P.hoursAvail + 1e-9;
+  R.coursOverFour = P.coursOn && C0.occ > 1;
+  if (Q > 0) {
+    const capMin = Math.min(capFour, capTemps);
+    let xMax = Math.max(Q * 1.8, R.qTot * 1.15, Math.min(isFinite(capMin) ? capMin * 1.2 : Q * 2, Q * 4));
     if (!(xMax > 0)) xMax = Q * 2;
     const N = 140, pts = [];
     for (let i = 0; i <= N; i++) { const x = xMax * i / N; const r = compute(S, x / Q); pts.push({x, y: r.result, nB: r.nB, nE: r.nE, occ: r.occ}); }
     R.curve = {pts, xMax};
-    if (compute(S, 0).result >= 0) R.breakEven = 0;
+    const resAt = s => compute(S, s).result;
+    if (resAt(0) >= 0) R.breakEven = 0;
     else {
-      const sMax = Math.max(4, xMax / Q * 2);
-      for (let i = 1; i <= 800; i++) { const s = sMax * i / 800; if (compute(S, s).result >= 0) { R.breakEven = s * Q; break; } }
+      const sMax = Math.max(8, xMax / Q * 4), steps = 1000;
+      let prev = 0;
+      for (let i = 1; i <= steps; i++) {
+        const s = sMax * i / steps;
+        if (resAt(s) >= 0) {
+          let lo = prev, hi = s;
+          for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (resAt(m) >= 0) hi = m; else lo = m; }
+          R.breakEven = hi * Q; break;
+        }
+        prev = s;
+      }
     }
-  } else if (R.result >= 0 && R.coursOn) R.breakEven = 0;
+    if (R.breakEven != null && R.breakEven > 0 && isFinite(capMin) && R.breakEven > capMin) R.beBeyond = true;
+  } else if (P.coursOn && R.result >= 0) R.breakEven = 0;
   return R;
 }
+
+
+root.AtelierCalc = {CLAYS, KILNS, KVA, aboFor, kwhBase, MAT_BASE, MAT_AJOUT, PIECE_T, FORMES, EMAILS, SCENARIOS, deriveFromVolume, applyKiln, applyClay, makeState, recipeCost, emailPrice, geom, compute, analyze, clamp, num, round, uid};
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+(() => {
+'use strict';
+const {CLAYS, KILNS, KVA, aboFor, kwhBase, MAT_BASE, MAT_AJOUT, PIECE_T, FORMES, EMAILS, SCENARIOS, deriveFromVolume, applyKiln, applyClay, makeState, recipeCost, emailPrice, geom, compute, analyze, clamp, num, round, uid} = window.AtelierCalc;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const NF0 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 0});
+const NF1 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 1});
+const E0 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0, minimumFractionDigits: 0});
+const E2 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 2, minimumFractionDigits: 2});
+const eur = (x, d) => { if (x == null || !isFinite(x)) return '—'; const useTwo = d === 2 || (d == null && Math.abs(x) < 100); return (useTwo ? E2 : E0).format(x).replace('-', '−'); };
+const n0 = x => isFinite(x) ? NF0.format(x).replace('-', '−') : '—';
+const n1 = x => isFinite(x) ? NF1.format(x).replace('-', '−') : '—';
+const pct = x => isFinite(x) ? NF0.format(x * 100) + ' %' : '—';
+
+const STORE = 'atelier-ceramique-v1';
+let state;
+try { const raw = localStorage.getItem(STORE); if (raw) { const s = JSON.parse(raw); if (s && s.v === 1 && Array.isArray(s.pieces)) state = s; } } catch (e) {}
+if (state && !state.v2) {
+  // Réglages enregistrés avec la 1re version : énergie et usure recalées sur des relevés réels.
+  state.temps.mode = state.temps.mode || 'prevu';
+  const v = num(state.four.volume), cf = (CLAYS[state.argile.type] || CLAYS.gres).kwhF, old = 1.40 * Math.pow(Math.max(v, 1), 0.85);
+  if (Math.abs(num(state.four.kwhE) - round(old * cf, 1)) < 0.6) state.four.kwhE = round(kwhBase(v) * cf, 1);
+  if (Math.abs(num(state.four.kwhB) - round(0.58 * old, 1)) < 0.6) state.four.kwhB = round(0.58 * kwhBase(v), 1);
+  if (state.usure.resistVie === 200) state.usure.resistVie = 120;
+  if (state.usure.thermoVie === 150) state.usure.thermoVie = 100;
+  state.v2 = true;
+}
+if (!state) state = makeState('pro');
+let saveT;
+const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }, 300); };
+const getPath = (o, p) => p.split('.').reduce((a, k) => a == null ? a : a[k], o);
+const setPath = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a, k) => a[k], o); t[last] = v; };
 
 /* ---------- Champs ---------- */
 const FIELDS = {
@@ -752,32 +813,32 @@ const FIELDS = {
   'f-four': [
     {p: 'four.preset', label: 'Modèle', type: 'select', options: Object.fromEntries(Object.entries(KILNS).map(([k, c]) => [k, c.label])), wide: true},
     {p: 'four.volume', label: 'Volume intérieur', unit: 'L', step: 5},
-    {p: 'four.puissance', label: 'Puissance', unit: 'kW', step: 0.1},
+    {p: 'four.puissance', label: 'Puissance', unit: 'kW', step: 0.1, hint: 'Sert au branchement et à l’abonnement. L’énergie consommée se règle en kWh par cuisson.'},
     {p: 'four.prix', label: "Prix d'achat", unit: '€', step: 100, hint: 'Occasion : 30 à 50 % de moins. Vérifiez briques, résistances et programmateur.'},
     {p: 'four.vie', label: "Durée d'amortissement", unit: 'ans', step: 1},
   ],
   'f-charge': [
     {p: 'four.remplissage', label: 'Taux de chargement', unit: '%', step: 1},
     {p: 'four.empilement', label: 'Gain au biscuit (empilage)', unit: '×', step: 0.1, hint: 'Au biscuit, les pièces se touchent et s’emboîtent : 1,5 à 2.'},
-    {p: 'four.jeu', label: 'Espace entre pièces', unit: 'cm', step: 0.5},
-    {p: 'four.plaque', label: 'Plaque et marge en hauteur', unit: 'cm', step: 0.5},
+    {p: 'four.jeu', label: 'Espace entre pièces', unit: 'cm', step: 0.5, hint: 'Agit par paliers : le total ne bouge que si une cuisson s’ajoute ou disparaît.'},
+    {p: 'four.plaque', label: 'Plaque et marge en hauteur', unit: 'cm', step: 0.5, hint: 'Agit par paliers, comme l’espace entre pièces.'},
     {p: 'four.kwhB', label: 'Énergie par biscuit', unit: 'kWh', step: 1},
     {p: 'four.kwhE', label: "Énergie par cuisson d'émail", unit: 'kWh', step: 1},
-    {p: 'four.cycleB', label: 'Cycle du biscuit', unit: 'h', step: 1, hint: 'Chauffe et refroidissement.'},
-    {p: 'four.cycleE', label: "Cycle de l'émail", unit: 'h', step: 1, hint: 'Chauffe et refroidissement.'},
-    {p: 'four.jours', label: 'Jours de four disponibles', unit: 'j/mois', step: 1, hint: 'Jours où vous pouvez charger et décharger.'},
+    {p: 'four.cycleB', label: 'Cycle du biscuit', unit: 'h', step: 1, hint: 'Chauffe et refroidissement. Compté en jours entiers : jusqu’à 24 h = 1 jour, de 25 à 48 h = 2 jours.'},
+    {p: 'four.cycleE', label: "Cycle de l'émail", unit: 'h', step: 1, hint: 'Chauffe et refroidissement, en jours entiers comme le biscuit.'},
+    {p: 'four.jours', label: 'Jours de four disponibles', unit: 'j/mois', step: 1, hint: 'Jours où vous pouvez charger et décharger. Ne change le résultat que si le four limite la production.'},
   ],
   'f-elec': [
-    {p: 'elec.prix', label: 'Prix du kWh (base ou heures pleines)', unit: '€/kWh', step: 0.001},
-    {p: 'elec.prixHC', label: 'Prix du kWh en heures creuses', unit: '€/kWh', step: 0.001},
+    {p: 'elec.prix', label: 'Prix du kWh (base ou heures pleines)', unit: '€/kWh', step: 0.001, hint: 'Option Base : 0,2001. En heures creuses, mettez ici le prix des heures pleines (0,2142).'},
+    {p: 'elec.prixHC', label: 'Prix du kWh en heures creuses', unit: '€/kWh', step: 0.001, hint: 'Sans effet tant que la part en heures creuses est à 0 %.'},
     {p: 'elec.partHC', label: 'Part des cuissons en heures creuses', unit: '%', step: 5, hint: '0 % en option Base.'},
     {p: 'elec.abo', label: "Surcoût d'abonnement", unit: '€/mois', step: 0.5, hint: 'Passage à un compteur plus puissant que 6 kVA.'},
   ],
   'f-usure': [
     {p: 'usure.resistPrix', label: 'Jeu de résistances', unit: '€', step: 10},
-    {p: 'usure.resistVie', label: 'Durée de vie des résistances', unit: 'cuissons', step: 10, hint: 'Cuissons haute température : 100 à 300.'},
+    {p: 'usure.resistVie', label: 'Durée de vie des résistances', unit: 'cuissons', step: 10, hint: 'Grès vers 1 280 °C : 80 à 150 cuissons. Faïence : nettement plus.'},
     {p: 'usure.thermoPrix', label: 'Thermocouple', unit: '€', step: 5},
-    {p: 'usure.thermoVie', label: 'Durée de vie du thermocouple', unit: 'cuissons', step: 10},
+    {p: 'usure.thermoVie', label: 'Durée de vie du thermocouple', unit: 'cuissons', step: 10, hint: 'Type K à haute température : 50 à 150 cuissons.'},
     {p: 'usure.plaques', label: 'Plaques, piliers, enduit, cônes', unit: '€/cuisson', step: 0.1},
   ],
   'f-cours': [
@@ -792,12 +853,12 @@ const FIELDS = {
     {p: 'cours.conso', label: 'Consommables par élève', unit: '€', step: 0.1},
   ],
   'f-temps': [
-    {p: 'temps.heures', label: "Heures disponibles à l'atelier", unit: 'h/mois', step: 5, hint: 'Un temps plein fait environ 150 h. Comptez ensuite la vente et la gestion à part.'},
+    {p: 'temps.heures', label: "Heures disponibles à l'atelier", unit: 'h/mois', step: 5, hint: 'Un temps plein fait environ 150 h, hors vente et gestion. Avec « Mes ventes prévues », ces heures ne comptent que si elles manquent. Avec « Ma capacité maximale », la production les remplit.'},
   ],
   'f-charges': [
     {p: 'charges.consommables', label: "Consommables de l'atelier", unit: '€/mois', step: 5},
     {p: 'charges.autres', label: 'Autres charges fixes (facultatif)', unit: '€/mois', step: 10, hint: 'Loyer, assurance, site web.'},
-    {p: 'charges.prel', label: 'Prélèvements sur les ventes', unit: '% du CA', step: 0.5, hint: 'Commissions de boutique ou de plateforme, cotisations sur le chiffre d’affaires.'},
+    {p: 'charges.prel', label: 'Prélèvements sur les ventes', unit: '% du CA', step: 0.5, hint: 'Commissions de boutique ou de plateforme, cotisations sur le chiffre d’affaires. 90 % au plus.'},
   ],
 };
 const fid = p => 'f-' + p.replace(/\./g, '-');
@@ -982,32 +1043,68 @@ function renderResults(R) {
   const kr = $('#k-result');
   kr.textContent = eur(R.result, 0);
   kr.className = 'k-value ' + (R.result >= 0 ? 'tone-good' : 'tone-bad');
-  $('#k-result-sub').textContent = `avant votre rémunération · chiffre d'affaires ${eur(R.ca, 0)}`;
+  const P = R.plan || R;
+  const pcs = x => { const v = Math.round(x); return `${n0(v)} pièce${Math.abs(v) >= 2 ? 's' : ''}`; };
+  const h1 = x => `${n1(x)} h`;
+  const capMin = Math.min(R.capFour ?? Infinity, R.capTemps ?? Infinity);
+  let volTxt;
+  if (R.mode === 'max') volTxt = R.noLimit ? `rien ne limite la production : calcul sur vos ventes saisies (${pcs(R.qTot)} / mois)` : `à pleine capacité : ${pcs(R.qTot)} / mois`;
+  else volTxt = R.limit ? `plafonné à ${pcs(R.qTot)} / mois sur ${n0(P.qTot)} prévues` : `${pcs(R.qTot)} / mois`;
+  $('#k-result-sub').textContent = `avant votre rémunération · ${volTxt} · chiffre d'affaires ${eur(R.ca, 0)}`;
+  for (const b of $$('[data-mode]')) b.setAttribute('aria-pressed', String(b.dataset.mode === R.mode));
+  let modeNote = '';
+  if (R.mode === 'prevu' && !R.limit && P.qTot > 0 && P.hoursAvail > P.hours + 0.05)
+    modeNote = `Vos ventes prévues n’utilisent que ${h1(P.hours)} sur ${h1(P.hoursAvail)} disponibles : ajouter des heures ne change pas le résultat. Choisissez « Ma capacité maximale » pour voir ce que rapporteraient vos heures libres.`;
+  else if (R.mode === 'prevu' && R.limit) modeNote = `Le résultat est calculé sur ce que ${R.limit === 'temps' ? 'votre temps' : 'votre four'} permet de produire, pas sur toutes vos ventes prévues.`;
+  else if (R.mode === 'max' && R.noLimit) modeNote = 'Indiquez un temps de travail par pièce (onglet Pièces) pour que vos heures fixent le volume.';
+  else if (R.mode === 'max' && P.qTot > 0) modeNote = `Les ventes saisies ne servent plus qu’à répartir la production entre les pièces. Limite atteinte : ${R.limit === 'temps' ? 'vos heures' : 'le four'}.`;
+  else if (R.mode === 'max') modeNote = 'Ce mode augmente la production de pièces. Vos cours restent au nombre de séances indiqué.';
+  $('#mode-note').textContent = modeNote;
 
   const perHour = R.hours > 0 ? R.result / R.hours : NaN;
   const roi = R.cash > 0 ? R.invest / R.cash : NaN;
-  let beTxt = '—', beSub = 'à répartition constante';
-  if (R.breakEven === 0) { beTxt = '0 pièce'; beSub = R.coursOn ? 'les cours couvrent déjà les charges' : 'charges couvertes'; }
-  else if (R.breakEven != null) { beTxt = `${n0(Math.ceil(R.breakEven))} pièces`; beSub = `par mois, sur ${n0(R.qTot)} prévues`; }
-  else { beTxt = 'Non atteint'; beSub = 'les prix ne couvrent pas les coûts'; }
+  let beTxt = '—', beSub = 'à répartition constante', beTone = '';
+  if (R.breakEven === 0) { beTxt = '0 pièce'; beSub = R.coursOn ? 'les cours couvrent déjà les charges' : 'charges couvertes'; beTone = 'good'; }
+  else if (R.breakEven != null) {
+    const be = Math.ceil(R.breakEven - 1e-6);
+    beTxt = pcs(be);
+    if (R.beBeyond) { beSub = `au-delà de votre capacité (${n0(capMin)} pièces / mois)`; beTone = 'bad'; }
+    else { beSub = R.mode === 'max' ? `par mois, sur ${n0(R.qTot)} à pleine capacité` : (R.limit ? `par mois, sur ${n0(P.qTot)} prévues (${n0(R.qTot)} réalisables)` : `par mois, sur ${n0(P.qTot)} prévues`); beTone = be <= R.qTot ? 'good' : ''; }
+  } else if (P.qTot > 0) { beTxt = 'Non atteint'; beSub = 'les ventes ne couvrent pas les coûts, même à fort volume'; beTone = 'bad'; }
+  else { beTxt = '—'; beSub = 'aucune pièce vendue'; }
   $('#kpis').innerHTML = [
-    kpi('Investissement de départ', eur(R.invest, 0), `dont four ${eur(num(S.four.prix), 0)}`),
-    kpi('Coût de revient moyen', eur(R.avgCost, 2), R.qTot > 0 ? `par pièce vendue (${n0(R.qTot)} / mois)` : 'aucune pièce vendue'),
-    kpi('Point mort', beTxt, beSub, R.breakEven != null && R.breakEven <= R.qTot ? 'good' : (R.breakEven == null ? 'bad' : '')),
+    kpi('Investissement de départ', eur(R.invest, 0), `dont four ${eur(Math.max(0, num(S.four.prix)), 0)}`),
+    kpi('Coût de revient moyen', R.qTot >= 0.5 ? eur(R.avgCost, 2) : '—', R.qTot >= 0.5 ? `par pièce vendue (${pcs(R.qTot)} / mois)` : 'aucune pièce produite'),
+    kpi('Point mort', beTxt, beSub, beTone),
     kpi('Retour sur investissement', isFinite(roi) ? `${n0(Math.ceil(roi))} mois` : '—', R.cash > 0 ? `trésorerie dégagée ${eur(R.cash, 0)}/mois` : 'aucune trésorerie dégagée'),
-    kpi('Par heure de travail', eur(perHour, 2), `${n0(R.hours)} h par mois`),
+    kpi('Par heure de travail', R.hours >= 0.5 ? eur(perHour, 2) : '—', `${h1(R.hours)} par mois`),
     kpi('Énergie des cuissons', `${n0(R.kwhMonth)} kWh`, `${eur(R.vElec, 0)} par mois`),
   ].join('');
 
+  const M = R.mode === 'prevu' ? P : R;
+  const sfx = R.mode === 'prevu' && R.limit ? ' (ventes prévues)' : '';
   $('#meters').innerHTML =
-    meter('Occupation du four', R.occ, isFinite(R.occ) ? pct(R.occ) : '—', `${n0(R.nB)} biscuit${R.nB > 1 ? 's' : ''} × ${R.dB} j + ${n0(R.nE)} émail${R.nE > 1 ? 's' : ''} × ${R.dE} j = ${n0(R.daysUsed)} jours sur ${n0(num(S.four.jours))}`) +
-    meter('Votre temps', R.hoursOcc, isFinite(R.hoursOcc) ? pct(R.hoursOcc) : '—', `${n0(R.hours)} h nécessaires sur ${n0(R.hoursAvail)} h disponibles`);
+    meter('Occupation du four' + sfx, M.occ, isFinite(M.occ) ? pct(M.occ) : '—', `${n0(M.nB)} biscuit${M.nB > 1 ? 's' : ''} × ${M.dB} j + ${n0(M.nE)} émail${M.nE > 1 ? 's' : ''} × ${M.dE} j = ${n0(M.daysUsed)} jour${M.daysUsed > 1 ? 's' : ''} sur ${n0(num(S.four.jours))}`) +
+    meter('Votre temps' + sfx, M.hoursOcc, isFinite(M.hoursOcc) ? pct(M.hoursOcc) : '—', `${h1(M.hours)} nécessaires sur ${h1(M.hoursAvail)} disponibles`);
+  R.meterOcc = M.occ;
 
   // alertes
   const al = [];
-  if (R.occ > 1) al.push(['bad', '!', `<b>Four saturé.</b> Il faut ${n0(R.daysUsed)} jours de cuisson pour ${n0(num(S.four.jours))} disponibles. Prenez un four plus grand, ajoutez-en un second ou réduisez le volume.`]);
-  else if (R.occ > 0.85) al.push(['warn', '!', `<b>Four presque plein</b> (${pct(R.occ)}). Une fournée ratée ou une commande de plus et le planning déborde.`]);
-  if (R.hoursOcc > 1) al.push(['bad', '!', `<b>Pas assez de temps.</b> Ce volume demande ${n0(R.hours)} h par mois pour ${n0(R.hoursAvail)} h disponibles. C’est vous, et non le four, qui limitez la production.`]);
+  for (const r of R.rows) if (r.noFit && num(r.p.qte) > 0) al.push(['bad', '!', `<b>${esc(r.p.nom)} ne rentre pas dans le four</b> : ${n1(r.g.vol)} L par pièce pour ${n1(R.useful)} L utiles par cuisson. Elle est exclue du calcul.`]);
+  if (R.coursOverTime) al.push(['bad', '!', `<b>Vos cours dépassent votre temps</b> : ils demandent à eux seuls ${h1(P.coursHours)} sur ${h1(P.hoursAvail)} disponibles. Ils restent comptés en entier ; réduisez les séances ou ajoutez des heures.`]);
+  if (R.coursOverFour) al.push(['bad', '!', `<b>Les pièces des élèves saturent le four</b> à elles seules. Elles restent comptées en entier ; réduisez les pièces par élève ou agrandissez le four.`]);
+  if (P.qTot > 0 && R.capFour === 0 && !R.coursOverFour) al.push(['bad', '!', `<b>Le four ne peut faire aucune fournée complète</b> : un biscuit et une cuisson d’émail demandent ${n0(P.dB + P.dE)} jours, vous en avez ${n0(num(S.four.jours))}.`]);
+  if (R.mode === 'max' && R.noLimit) al.push(['warn', '!', `<b>Rien ne limite la production.</b> Sans temps de travail par pièce et avec un four aussi grand, le volume serait infini : le calcul reste sur vos ventes saisies.`]);
+  else if (R.mode === 'max' && P.qTot > 0 && R.qTot < 0.5 && R.capFour !== 0) al.push(['bad', '!', `<b>Aucune heure disponible pour fabriquer des pièces.</b> Ajoutez des heures dans l’onglet Temps et charges.`]);
+  else if (R.mode === 'max' && P.qTot > 0 && R.qTot >= 0.5) al.push(['info', 'i', `<b>Calcul à pleine capacité.</b> Vos ventes saisies sont ${R.scale >= 1 ? 'augmentées' : 'réduites'} (× ${n1(R.scale)}) pour ${R.limit === 'temps' ? 'remplir exactement vos heures disponibles' : 'remplir le four'}. Ce résultat suppose que vous vendez tout.`]);
+  else if (R.mode === 'prevu' && R.limit && R.capFour !== 0) {
+    const lost = P.result - R.result;
+    if (R.limit === 'temps') al.push(['bad', '!', `<b>Pas assez de temps.</b> Vos ventes prévues demandent ${h1(P.hours)} par mois pour ${h1(P.hoursAvail)} disponibles. Vous ne pouvez produire que ${pcs(R.qTot)} sur ${n0(P.qTot)} : le résultat est calculé sur ce volume${lost >= 1 ? `, soit ${eur(lost, 0)} de moins que prévu` : ''}.`]);
+    else al.push(['bad', '!', `<b>Four saturé.</b> Vos ventes prévues demandent ${n0(P.daysUsed)} jours de cuisson pour ${n0(num(S.four.jours))} disponibles. Le four ne sort que ${pcs(R.qTot)} sur ${n0(P.qTot)} : le résultat est calculé sur ce volume. Prenez un four plus grand ou ajoutez-en un second.`]);
+  }
+  if (!R.limit && R.occ > 0.85 && R.occ <= 1) al.push(['warn', '!', `<b>Four presque plein</b> (${pct(R.occ)}). Une fournée ratée ou une commande de plus et le planning déborde.`]);
+  if (!R.limit && !R.coursOverTime && R.hoursOcc > 0.9 && R.hoursOcc <= 1) al.push(['warn', '!', `<b>Votre temps est presque plein</b> (${pct(R.hoursOcc)}). Sans heures en plus, vous ne pourrez pas vendre davantage.`]);
+  if (S.email.mode === 'maison' && recipeCost(S.email) === 0) al.push(['warn', '!', `<b>Recette d’émail vide</b> : l’émail compte pour 0 €. Ajoutez des matières ou passez à l’émail du commerce.`]);
   const fill = R.nE > 0 ? R.fillE : 1;
   if (R.nE > 0 && fill < 0.75) al.push(['warn', '!', `<b>Cuissons d’émail remplies à ${pct(fill)}.</b> Regroupez vos pièces : un four plein divise le coût de cuisson par pièce.`]);
   for (const r of R.rows) if (r.q > 0 && r.marge < 0) al.push(['bad', '!', `<b>${esc(r.p.nom)} vendu à perte</b> : ${eur(r.marge, 2)} par pièce.`]);
@@ -1016,7 +1113,7 @@ function renderResults(R) {
   if (kw <= 3.7) al.push(['info', 'i', `<b>Branchement :</b> ${n1(kw)} kW passent sur une prise 16 A dédiée.`]);
   else if (kw <= 7.4) al.push(['info', 'i', `<b>Branchement :</b> ${n1(kw)} kW demandent une ligne dédiée de 32 A en monophasé et un compteur d’au moins ${ab.kva} kVA.`]);
   else al.push(['info', 'i', `<b>Branchement :</b> ${n1(kw)} kW, le triphasé est conseillé${ab.over ? ', au-delà de 36 kVA il faut un contrat professionnel (tarif jaune)' : `, avec un compteur d’au moins ${ab.kva} kVA`}. Vérifiez votre compteur avant d’acheter.`]);
-  if (R.result >= 0 && R.occ <= 1 && R.hoursOcc <= 1 && al.every(a => a[0] === 'info')) al.unshift(['good', '✓', `<b>Le plan tient</b> : le four et votre temps suffisent, et chaque pièce dégage une marge.`]);
+  if (!R.limit && !R.noLimit && R.qTot >= 0.5 && R.result >= 0 && R.occ <= 1 && R.hoursOcc <= 1 && al.every(a => a[0] === 'info')) al.unshift(['good', '✓', `<b>Le plan tient</b> : le four et votre temps suffisent, et chaque pièce dégage une marge.`]);
   $('#alerts').innerHTML = al.map(([t, i, m]) => `<li class="alert ${t}"><span class="ico" aria-hidden="true">${i}</span><span><span class="sr-only" style="position:absolute;left:-9999px">${({bad: 'Critique', warn: 'Attention', info: 'Information', good: 'Bon'})[t]} : </span>${m}</span></li>`).join('');
 
   // barres
@@ -1075,7 +1172,7 @@ function renderResults(R) {
   $('#mb-res').textContent = eur(R.result, 0);
   $('#mb-res').className = R.result >= 0 ? 'tone-good' : 'tone-bad';
   $('#mb-cost').textContent = eur(R.avgCost, 2);
-  $('#mb-occ').textContent = isFinite(R.occ) ? pct(R.occ) : '—';
+  $('#mb-occ').textContent = isFinite(R.meterOcc) ? pct(R.meterOcc) : '—';
 
   drawCurve(R);
 }
@@ -1121,7 +1218,7 @@ function drawCurve(R) {
   let marks = '';
   if (R.breakEven != null && R.breakEven > 0 && R.breakEven <= xMax) marks += `<circle cx="${X(R.breakEven)}" cy="${Y(0)}" r="4.5" fill="var(--ink)" stroke="var(--panel)" stroke-width="2"/><text class="lbl-ink" x="${X(R.breakEven) + 8}" y="${Y(0) + (Y(0) > H - m.b - 20 ? -8 : 16)}">Point mort</text>`;
   const cx = X(R.qTot), cy = Y(R.result);
-  marks += `<circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/><text class="lbl-ink" x="${cx + (cx > W - 120 ? -9 : 9)}" y="${cy - 9}" text-anchor="${cx > W - 120 ? 'end' : 'start'}">Votre plan</text>`;
+  marks += `<circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/><text class="lbl-ink" x="${cx + (cx > W - 120 ? -9 : 9)}" y="${cy - 9}" text-anchor="${cx > W - 120 ? 'end' : 'start'}">Volume calculé</text>`;
   box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Résultat mensuel selon le nombre de pièces vendues par mois. Point mort : ${R.breakEven != null ? n0(R.breakEven) : 'non atteint'} pièces. Capacité du four : ${R.capFour != null ? n0(R.capFour) : '—'} pièces.">
     ${shade}${g}${lines}${path}${marks}
     <text x="${W - m.r}" y="${H - 2}" text-anchor="end">pièces vendues par mois</text>
@@ -1197,7 +1294,7 @@ function onField(e) {
   const t = e.target;
   if (t.dataset.path) {
     const path = t.dataset.path;
-    const val = t.type === 'checkbox' ? t.checked : (t.tagName === 'SELECT' ? t.value : num(t.value));
+    const val = t.type === 'checkbox' ? t.checked : (t.tagName === 'SELECT' ? t.value : Math.max(0, num(t.value)));
     setPath(state, path, val);
     if (path === 'argile.type') { applyClay(state, val); syncInputs(); }
     else if (path === 'four.preset') { if (val !== 'perso') { applyKiln(state, val); syncInputs(); } }
@@ -1210,18 +1307,18 @@ function onField(e) {
   if (t.dataset.piece) {
     const p = state.pieces.find(x => x.id === t.dataset.piece); if (!p) return;
     const key = t.dataset.key;
-    p[key] = (key === 'nom' || key === 'forme' || key === 'email') ? t.value : num(t.value);
+    p[key] = (key === 'nom' || key === 'forme' || key === 'email') ? t.value : Math.max(0, num(t.value));
     state.dirty = true; update(); return;
   }
   if (t.dataset.eq) {
     const it = state.equip.find(x => x.id === t.dataset.eq); if (!it) return;
     const key = t.dataset.key;
-    it[key] = key === 'actif' ? t.checked : key === 'nom' ? t.value : num(t.value);
+    it[key] = key === 'actif' ? t.checked : key === 'nom' ? t.value : Math.max(0, num(t.value));
     state.dirty = true; update(); return;
   }
   if (t.dataset.rec) {
     const arr = state.email[t.dataset.rec]; const it = arr.find(x => x.id === t.dataset.id); if (!it) return;
-    it[t.dataset.key] = t.dataset.key === 'nom' ? t.value : num(t.value);
+    it[t.dataset.key] = t.dataset.key === 'nom' ? t.value : Math.max(0, num(t.value));
     state.dirty = true; update(); return;
   }
   if (t.id === 'add-base' || t.id === 'add-ajout') {
@@ -1238,6 +1335,7 @@ document.addEventListener('change', e => { if (e.target.tagName === 'SELECT' || 
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.tab) { selectTab(b.dataset.tab); return; }
+  if (b.dataset.mode) { state.temps.mode = b.dataset.mode; state.dirty = true; update(); return; }
   if (b.dataset.scen) {
     const k = b.dataset.scen;
     if (state.dirty) { pendingScenario = k; $('#confirm-text').textContent = `Remplacer tous vos réglages par le scénario « ${SCENARIOS[k].label} » ?`; $('#confirm').hidden = false; $('#confirm-yes').focus(); }
