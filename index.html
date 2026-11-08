@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulateur d'atelier céramique</title>
+<meta name="description" content="Simulateur réglable des coûts matériels et du rendement d'un atelier de céramique : dimensions des pièces, terre, émaux, four, équipement et cours.">
+<meta property="og:title" content="Simulateur d'atelier céramique">
+<meta property="og:description" content="Simulateur réglable des coûts matériels et du rendement d'un atelier de céramique : dimensions des pièces, terre, émaux, four, équipement et cours.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 9h24c0 9-5 16-12 16S4 18 4 9z' fill='%231f4fa8'/%3E%3Crect x='11' y='25' width='10' height='3' rx='1' fill='%231f4fa8'/%3E%3C/svg%3E">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Young+Serif&display=swap">
+<style>
+/* Mise en page : fiche d'atelier. Réglages à onglets à gauche, tableau de résultats collant à droite ; tout s'empile en une colonne sur mobile. */
+:root{
+  --bg:#edf0ec;          /* grès cru */
+  --panel:#fbfbf9;       /* biscuit */
+  --panel-2:#f1f3ef;
+  --ink:#1b2124;
+  --ink-2:#4a5458;
+  --muted:#667074;
+  --line:#d5dbd6;
+  --line-strong:#b3bbb6;
+  --accent:#1f4fa8;      /* oxyde de cobalt */
+  --accent-ink:#ffffff;
+  --accent-soft:#e0e7f5;
+  --good:#1d7a3e; --good-soft:#e2f1e7;
+  --warn:#8a5700; --warn-soft:#fbefd6;
+  --bad:#b3261e;  --bad-soft:#f9e3e0;
+  --s1:#a8622e; --s2:#2a5fc4; --s3:#d39a1a; --s4:#2f9a74; --s5:#c9402f; --s6:#7360c8;
+  --grid:#e3e7e3; --axis:#bcc4bf;
+  --font-display:"Young Serif","Iowan Old Style",Georgia,serif;
+  --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121615; --panel:#1b1e1d; --panel-2:#232827; --ink:#e8ece9; --ink-2:#b5bebb; --muted:#909a97;
+    --line:#2f3634; --line-strong:#46504c; --accent:#86a9f0; --accent-ink:#0c1a35; --accent-soft:#1e2a42;
+    --good:#5cc684; --good-soft:#16301f; --warn:#e7ad45; --warn-soft:#33280f; --bad:#f2806f; --bad-soft:#3b1b17;
+    --s1:#c27a45; --s2:#4f83e3; --s3:#c08a1c; --s4:#2f9a76; --s5:#e2604a; --s6:#9486e0;
+    --grid:#2a302e; --axis:#3c4542; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121615; --panel:#1b1e1d; --panel-2:#232827; --ink:#e8ece9; --ink-2:#b5bebb; --muted:#909a97;
+  --line:#2f3634; --line-strong:#46504c; --accent:#86a9f0; --accent-ink:#0c1a35; --accent-soft:#1e2a42;
+  --good:#5cc684; --good-soft:#16301f; --warn:#e7ad45; --warn-soft:#33280f; --bad:#f2806f; --bad-soft:#3b1b17;
+  --s1:#c27a45; --s2:#4f83e3; --s3:#c08a1c; --s4:#2f9a76; --s5:#e2604a; --s6:#9486e0;
+  --grid:#2a302e; --axis:#3c4542; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--accent)}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 110px}
+@media (min-width:1000px){.wrap{padding-block:32px 48px}}
+
+/* En-tête */
+.top{display:grid;gap:18px;grid-template-columns:minmax(0,1fr);margin-bottom:22px}
+@media (min-width:1000px){.top{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:end}}
+.eyebrow{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(30px,4.2vw,46px);line-height:1.05;margin:0 0 10px;text-wrap:balance;letter-spacing:-.01em}
+.lede{margin:0;color:var(--ink-2);max-width:62ch}
+.scen{display:flex;flex-direction:column;gap:8px}
+.scen-label{font-size:13px;color:var(--ink-2);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:baseline;gap:8px;padding:8px 12px;border:1px solid var(--line-strong);background:var(--panel);border-radius:6px;cursor:pointer;font-weight:500}
+.chip small{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-weight:400}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip[aria-pressed="true"] small{color:var(--accent-ink);opacity:.85}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;background:var(--warn-soft);border-radius:6px;font-size:14px}
+.saved-note{font-size:12px;color:var(--muted);margin:0}
+
+/* Grille principale */
+.grid{display:grid;gap:22px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:1000px){.grid{grid-template-columns:minmax(0,1fr) minmax(380px,470px)}}
+
+/* Onglets */
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line-strong);margin-bottom:18px;scrollbar-width:thin}
+.tab{flex:0 0 auto;background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px 9px;cursor:pointer;color:var(--ink-2);font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .count{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-left:6px}
+
+.panel{display:flex;flex-direction:column;gap:18px}
+.group{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.group h2{font-family:var(--font-display);font-weight:400;font-size:20px;margin:0 0 4px;text-wrap:balance}
+.group .intro{margin:0 0 14px;color:var(--ink-2);font-size:14px;max-width:70ch}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px 16px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f-label{font-size:13px;color:var(--ink-2);font-weight:500}
+.f-input{display:flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:6px;background:var(--panel);overflow:hidden}
+.f-input:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.f-input input{flex:1 1 auto;min-width:0;width:100%;border:0;background:transparent;padding:7px 8px;font-variant-numeric:tabular-nums;outline:none}
+.f-unit{display:flex;align-items:center;padding:0 9px;font-size:12px;color:var(--muted);background:var(--panel-2);border-left:1px solid var(--line);font-family:var(--font-mono);white-space:nowrap}
+select{width:100%;border:1px solid var(--line-strong);border-radius:6px;background:var(--panel);padding:7px 8px;min-width:0}
+select:focus-visible,button:focus-visible,input[type="checkbox"]:focus-visible,.piece-name:focus-visible,.txt:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.f-hint{font-size:12px;color:var(--muted);line-height:1.35}
+.sub-h{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:16px 0 10px;grid-column:1/-1}
+.sub-h:first-child{margin-top:0}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--panel);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:500;font-size:14px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn-ghost{border:0;background:none;color:var(--ink-2);cursor:pointer;padding:4px 6px;font-size:13px;border-radius:4px}
+.btn-ghost:hover{color:var(--ink);background:var(--panel-2)}
+.btn-ghost.danger:hover{color:var(--bad)}
+.add-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.add-row .lbl{font-size:13px;color:var(--ink-2);margin-right:4px}
+
+/* Pièces */
+.piece{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+@media (min-width:640px){.piece{grid-template-columns:120px minmax(0,1fr)}}
+.piece-fig{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--panel-2);border-radius:6px;padding:8px 6px}
+.piece-fig svg{width:100%;max-width:120px;height:auto;display:block}
+.piece-fig .dims{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center;line-height:1.3}
+.piece-head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.piece-name{flex:1 1 auto;min-width:0;font-family:var(--font-display);font-size:20px;border:0;border-bottom:1px solid transparent;background:transparent;padding:2px 0;outline:none}
+.piece-name:hover{border-bottom-color:var(--line-strong)}
+.piece .fields{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px 12px}
+.piece-spec{margin:12px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+.spec{font-size:12px;font-family:var(--font-mono);background:var(--panel-2);border-radius:4px;padding:3px 7px;color:var(--ink-2);white-space:nowrap}
+.spec b{color:var(--ink);font-weight:500}
+.spec.cost{background:var(--accent-soft);color:var(--ink)}
+
+/* Tables éditables */
+.etable{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;container:eq / inline-size}
+.etable.rtable{container:rec / inline-size}
+.erow{display:grid;grid-template-columns:28px minmax(0,1fr) 112px 62px 92px 92px 30px;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line);background:var(--panel)}
+.erow:first-child{border-top:0}
+.erow.head{background:var(--panel-2);font-size:12px;color:var(--muted);font-weight:500;padding-block:7px}
+.erow .num{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.erow.off{opacity:.55}
+.txt,.mini{width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;background:var(--panel);padding:5px 7px}
+.mini{text-align:right;font-variant-numeric:tabular-nums}
+.efoot{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-top:1px solid var(--line);background:var(--panel-2);font-weight:500;font-variant-numeric:tabular-nums}
+.cell{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell::before{content:attr(data-l);display:none;font-size:11px;color:var(--muted);text-align:left}
+.rtable .erow{grid-template-columns:minmax(0,1fr) 84px 92px 84px 30px}
+@container eq (max-width:660px){
+  .erow{grid-template-columns:28px minmax(0,1fr) minmax(0,1fr) 30px;grid-template-areas:"chk name name del" ". prix qte ." ". amort tot .";row-gap:6px}
+  .erow > :nth-child(1){grid-area:chk}.erow > :nth-child(2){grid-area:name}.erow > :nth-child(3){grid-area:prix}.erow > :nth-child(4){grid-area:qte}.erow > :nth-child(5){grid-area:amort}.erow > :nth-child(6){grid-area:tot}.erow > :nth-child(7){grid-area:del}
+  .erow.head{display:none}
+  .cell::before{display:block}
+  .cell.num{justify-content:flex-end}
+}
+@container rec (max-width:470px){
+  .rtable .erow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px;grid-template-areas:"name name del" "part prix ." "tot tot .";row-gap:6px}
+  .rtable .erow > :nth-child(1){grid-area:name}.rtable .erow > :nth-child(2){grid-area:part}.rtable .erow > :nth-child(3){grid-area:prix}.rtable .erow > :nth-child(4){grid-area:tot}.rtable .erow > :nth-child(5){grid-area:del}
+  .rtable .erow.head{display:none}
+  .rtable .cell::before{display:block}
+}
+#recipe-block > .sub-h:first-child{margin-top:18px}
+.inline-sel{max-width:280px}
+.rec-total{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin-top:12px;font-size:14px;color:var(--ink-2)}
+.rec-total strong{font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Bascule */
+.toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:500}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+fieldset:disabled{opacity:.5}
+
+/* Résultats */
+.results{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 20px;display:flex;flex-direction:column;gap:22px;min-width:0}
+@media (min-width:1000px){.results{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px);max-height:calc(100vh - 28px);overflow-y:auto;scrollbar-width:thin}}
+.results h2{font-family:var(--font-display);font-weight:400;font-size:19px;margin:0 0 10px}
+.r-sec{display:flex;flex-direction:column;gap:10px;min-width:0}
+.r-sec > h2{margin-bottom:0}
+.r-cap{font-size:13px;color:var(--muted);margin:-4px 0 0}
+.hero{display:flex;flex-direction:column;gap:2px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.hero .k-label{font-size:13px;color:var(--ink-2);font-weight:500}
+.hero .k-value{font-size:44px;font-weight:600;line-height:1.05;letter-spacing:-.02em}
+.hero .k-sub{font-size:13px;color:var(--muted)}
+.tone-good{color:var(--good)} .tone-bad{color:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.kpi{display:flex;flex-direction:column;gap:1px;min-width:0}
+.kpi .k-label{font-size:12px;color:var(--ink-2);font-weight:500}
+.kpi .k-value{font-size:21px;font-weight:600;line-height:1.2}
+.kpi .k-sub{font-size:12px;color:var(--muted);line-height:1.3}
+.meters{display:flex;flex-direction:column;gap:12px}
+.meter-h{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:5px}
+.meter-h span:first-child{color:var(--ink-2);font-weight:500}
+.meter-h span:last-child{font-variant-numeric:tabular-nums}
+.meter{height:8px;border-radius:99px;background:var(--accent-soft);overflow:hidden}
+.meter > i{display:block;height:100%;border-radius:99px;background:var(--accent);max-width:100%}
+.meter.warn{background:var(--warn-soft)} .meter.warn > i{background:var(--warn)}
+.meter.bad{background:var(--bad-soft)} .meter.bad > i{background:var(--bad)}
+.meter-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.alerts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.alert{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start;font-size:13px;padding:8px 10px;border-radius:6px;background:var(--panel-2);line-height:1.4}
+.alert .ico{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;font-family:var(--font-mono)}
+.alert.bad{background:var(--bad-soft)} .alert.bad .ico{background:var(--bad);color:var(--panel)}
+.alert.warn{background:var(--warn-soft)} .alert.warn .ico{background:var(--warn);color:var(--panel)}
+.alert.info .ico{background:var(--ink-2);color:var(--panel)}
+.alert.good{background:var(--good-soft)} .alert.good .ico{background:var(--good);color:var(--panel)}
+.alert b{font-weight:600}
+
+/* Barres empilées */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend i.tick{width:2px;height:12px;border-radius:0;background:var(--ink)}
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;font-size:13px;margin-bottom:6px}
+.bar-name{font-weight:600}
+.bar-val{color:var(--ink-2);font-variant-numeric:tabular-nums}
+.bar-val b{font-weight:600}
+.bar-track{position:relative;height:16px;display:flex;gap:2px}
+.seg{height:100%;min-width:0;cursor:default}
+.seg:first-child{border-radius:0}
+.seg.last{border-top-right-radius:4px;border-bottom-right-radius:4px}
+.price-tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);margin-left:-1px;pointer-events:none}
+details.tbl{font-size:13px}
+details.tbl summary{cursor:pointer;color:var(--accent);font-weight:500;padding:2px 0}
+.tscroll{overflow-x:auto;margin-top:8px;border:1px solid var(--line);border-radius:6px}
+table.data{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:12.5px}
+table.data th,table.data td{padding:6px 8px;text-align:right;white-space:nowrap;border-top:1px solid var(--line)}
+table.data thead th{background:var(--panel-2);color:var(--muted);font-weight:500;border-top:0}
+table.data th:first-child,table.data td:first-child{text-align:left}
+
+/* Compte mensuel */
+table.pl{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.pl th{text-align:left;font-weight:400;color:var(--ink-2);padding:5px 0}
+table.pl td{text-align:right;padding:5px 0 5px 10px;white-space:nowrap}
+table.pl tr.tot th,table.pl tr.tot td{font-weight:600;color:var(--ink);border-top:1px solid var(--line-strong);padding-top:8px}
+table.pl tr.final th,table.pl tr.final td{font-size:15px}
+table.pl tr.sub th{padding-left:12px}
+table.pl tr.note th,table.pl tr.note td{color:var(--muted);font-size:12.5px}
+
+/* Courbe */
+.curve{position:relative;width:100%;min-height:230px}
+.curve svg{display:block;width:100%;height:auto;overflow:visible}
+.curve text{font-family:var(--font-ui);font-size:11px;fill:var(--muted)}
+.curve .lbl-ink{fill:var(--ink-2);font-weight:500;paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.empty{font-size:13px;color:var(--muted);padding:20px 0}
+
+/* Infobulle */
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--panel);font-size:12px;line-height:1.4;padding:6px 9px;border-radius:5px;max-width:260px;font-variant-numeric:tabular-nums;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+
+/* Pied */
+.foot-notes{margin-top:28px;display:grid;gap:18px;grid-template-columns:minmax(0,1fr);font-size:13px;color:var(--ink-2)}
+@media (min-width:800px){.foot-notes{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}}
+.foot-notes h3{font-family:var(--font-display);font-weight:400;font-size:17px;margin:0 0 6px;color:var(--ink)}
+.foot-notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;max-width:75ch}
+
+/* Barre mobile */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:14px;align-items:center;background:var(--panel);border-top:1px solid var(--line-strong);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-shadow:0 -6px 18px rgba(0,0,0,.06)}
+.mbar div{display:flex;flex-direction:column;min-width:0;flex:1 1 0}
+.mbar span{font-size:11px;color:var(--muted)}
+.mbar b{font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mbar .btn{flex:0 0 auto}
+@media (min-width:1000px){.mbar{display:none}}
+@media (prefers-reduced-motion:no-preference){.meter > i{transition:width .25s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Atelier céramique · budget matériel</p>
+      <h1>Simulateur d'atelier céramique</h1>
+      <p class="lede">Réglez vos pièces et leurs dimensions, la terre, les émaux, le four et l'équipement. Le coût de revient, l'occupation du four et le résultat mensuel se recalculent à chaque modification. Prix TTC indicatifs (France, novembre 2026), hors salaires.</p>
+    </div>
+    <div class="scen">
+      <span class="scen-label" id="scen-label">Partir d'un scénario type</span>
+      <div class="chips" role="group" aria-labelledby="scen-label" id="chips"></div>
+      <div class="confirm" id="confirm" hidden>
+        <span id="confirm-text"></span>
+        <button class="btn primary" id="confirm-yes" type="button">Remplacer</button>
+        <button class="btn" id="confirm-no" type="button">Annuler</button>
+      </div>
+      <p class="saved-note">Vos réglages restent enregistrés dans ce navigateur.</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section aria-label="Réglages">
+      <nav class="tabs" role="tablist" id="tabs">
+        <button class="tab" role="tab" id="tab-pieces" aria-controls="panel-pieces" data-tab="pieces">Pièces<span class="count" id="count-pieces"></span></button>
+        <button class="tab" role="tab" id="tab-terre" aria-controls="panel-terre" data-tab="terre">Terre et émail</button>
+        <button class="tab" role="tab" id="tab-four" aria-controls="panel-four" data-tab="four">Four</button>
+        <button class="tab" role="tab" id="tab-equip" aria-controls="panel-equip" data-tab="equip">Équipement</button>
+        <button class="tab" role="tab" id="tab-cours" aria-controls="panel-cours" data-tab="cours">Cours</button>
+        <button class="tab" role="tab" id="tab-charges" aria-controls="panel-charges" data-tab="charges">Temps et charges</button>
+      </nav>
+
+      <div class="panel" role="tabpanel" id="panel-pieces" aria-labelledby="tab-pieces">
+        <div class="group">
+          <h2>Vos pièces</h2>
+          <p class="intro">Les dimensions sont celles de la pièce finie, après cuisson. Le simulateur en déduit l'argile à tourner (retrait compris), la surface à émailler et la place prise dans le four. Les dessins sont tous à la même échelle.</p>
+          <div class="add-row"><span class="lbl">Ajouter :</span>
+            <button class="btn" type="button" data-add-piece="mug">Mug</button>
+            <button class="btn" type="button" data-add-piece="bol">Bol</button>
+            <button class="btn" type="button" data-add-piece="assiette">Assiette</button>
+            <button class="btn" type="button" data-add-piece="vase">Vase</button>
+            <button class="btn" type="button" data-add-piece="libre">Pièce libre (poids imposé)</button>
+          </div>
+        </div>
+        <div class="panel" id="pieces-list"></div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-terre" aria-labelledby="tab-terre" hidden>
+        <div class="group"><h2>Argile</h2><p class="intro">Changer de type de terre ajuste le prix, le retrait, la casse et l'énergie de la cuisson d'émail.</p><div class="fields" id="f-argile"></div></div>
+        <div class="group"><h2>Casse</h2><p class="intro">Part des pièces perdues à chaque étape. Une pièce cassée crue se recycle ; après le biscuit, elle est perdue avec l'énergie déjà dépensée.</p><div class="fields" id="f-casse"></div></div>
+        <div class="group"><h2>Émail et pigments</h2><p class="intro">Le dépôt correspond à l'émail sec qui reste sur la pièce. Au trempage, comptez 0,04 à 0,08 g/cm².</p><div class="fields" id="f-email"></div>
+          <div id="recipe-block">
+            <p class="sub-h">Recette maison · base (en parts)</p>
+            <div class="etable rtable" id="rec-base"></div>
+            <div class="add-row" style="margin-top:8px"><select class="inline-sel" id="add-base" aria-label="Ajouter une matière de base"></select></div>
+            <p class="sub-h">Ajouts · oxydes et colorants (en parts, en plus de la base)</p>
+            <div class="etable rtable" id="rec-ajouts"></div>
+            <div class="add-row" style="margin-top:8px"><select class="inline-sel" id="add-ajout" aria-label="Ajouter un oxyde ou un colorant"></select></div>
+            <div class="rec-total"><span>Coût de la recette : <strong id="rec-cost"></strong> par kg sec</span><span id="rec-note"></span></div>
+            <p class="f-hint" style="margin-top:6px">Prix par sac de 25 kg pour les matières de base. En sachets de 1 à 5 kg, comptez 2 à 4 fois plus cher.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-four" aria-labelledby="tab-four" hidden>
+        <div class="group"><h2>Four électrique</h2><p class="intro">Choisir un modèle remplit le volume, la puissance, le prix, l'énergie et la durée des cuissons. Changer le volume à la main recalcule l'énergie et l'usure.</p><div class="fields" id="f-four"></div></div>
+        <div class="group"><h2>Chargement et cuissons</h2><p class="intro">Le taux de chargement tient compte des piliers, des plaques et des vides : 55 à 70 % du volume intérieur est réellement occupé.</p><div class="fields" id="f-charge"></div></div>
+        <div class="group"><h2>Électricité</h2><p class="intro">Tarif réglementé option Base : 0,2001 €/kWh depuis le 1<sup>er</sup> août 2026. En heures pleines / heures creuses : 0,2142 et 0,1589 €/kWh.</p><div class="fields" id="f-elec"></div><p class="f-hint" id="elec-advice" style="margin-top:10px"></p></div>
+        <div class="group"><h2>Usure du four</h2><p class="intro">Coût réparti sur chaque cuisson. Un biscuit use environ 40 % d'une cuisson haute température ; une cuisson de faïence, la moitié.</p><div class="fields" id="f-usure"></div></div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-equip" aria-labelledby="tab-equip" hidden>
+        <div class="group"><h2>Équipement et investissement</h2>
+          <p class="intro">Le four est réglé dans l'onglet Four. Une durée d'amortissement à 0 signifie un stock de départ : l'argent est avancé une fois, puis la consommation passe dans les coûts mensuels.</p>
+          <div class="etable" id="equip-table"></div>
+          <div class="add-row" style="margin-top:10px"><button class="btn" type="button" id="add-equip">Ajouter une ligne</button></div>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-cours" aria-labelledby="tab-cours" hidden>
+        <div class="group"><h2>Cours et ateliers</h2>
+          <p class="intro">Les pièces des élèves passent dans le même four que votre production et prennent de la place à chaque cuisson.</p>
+          <label class="toggle" for="f-cours-actif"><input type="checkbox" id="f-cours-actif" data-path="cours.actif"> Proposer des cours</label>
+          <fieldset id="cours-fs" style="margin-top:14px"><div class="fields" id="f-cours"></div></fieldset>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-charges" aria-labelledby="tab-charges" hidden>
+        <div class="group"><h2>Votre temps</h2><p class="intro">Le temps n'est pas compté comme un coût. Il sert à calculer ce que rapporte une heure à l'atelier et à repérer si c'est vous, et non le four, qui limitez la production.</p><div class="fields" id="f-temps"></div></div>
+        <div class="group"><h2>Charges mensuelles</h2><p class="intro">Les consommables sont les éponges, sacs, bâches, cônes, enduit de plaques, pinceaux et emballages. Le loyer et l'assurance sont facultatifs, car ils ne sont pas du matériel.</p><div class="fields" id="f-charges"></div></div>
+      </div>
+    </section>
+
+    <aside class="results" id="results" aria-label="Résultats" aria-live="polite">
+      <div class="hero">
+        <span class="k-label">Résultat mensuel</span>
+        <span class="k-value" id="k-result"></span>
+        <span class="k-sub" id="k-result-sub"></span>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="meters" id="meters"></div>
+      <ul class="alerts" id="alerts"></ul>
+      <div class="r-sec">
+        <h2>Coût de revient par pièce</h2>
+        <p class="r-cap">Par pièce vendue, casse comprise. Le trait noir marque le prix de vente.</p>
+        <div class="legend" id="bar-legend"></div>
+        <div class="bars" id="bars"></div>
+        <details class="tbl"><summary>Voir le détail chiffré</summary><div class="tscroll" id="cost-table"></div></details>
+      </div>
+      <div class="r-sec">
+        <h2>Rendement selon le volume</h2>
+        <p class="r-cap" id="curve-cap">Résultat mensuel si vous vendez plus ou moins de pièces, avec la même répartition.</p>
+        <div class="curve" id="curve"></div>
+      </div>
+      <div class="r-sec">
+        <h2>Compte mensuel</h2>
+        <table class="pl" id="pl"></table>
+      </div>
+      <div class="r-sec">
+        <h2>Four et cuissons</h2>
+        <table class="pl" id="kiln-table"></table>
+      </div>
+      <div class="r-sec">
+        <h2>Investissement de départ</h2>
+        <table class="pl" id="inv-table"></table>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="foot-notes">
+    <div>
+      <h3>Hypothèses du calcul</h3>
+      <ul>
+        <li>Chaque pièce passe deux fois au four : biscuit vers 980 °C, puis émail. Une cuisson coûte l'électricité plus une part de l'usure des résistances, du thermocouple et des plaques.</li>
+        <li>Une cuisson lancée compte entièrement, même si le four n'est pas plein. Ses coûts sont répartis entre les pièces selon la place qu'elles occupent.</li>
+        <li>Les frais fixes (amortissements, consommables, abonnement, autres charges) sont répartis selon la place occupée à la cuisson d'émail.</li>
+        <li>L'argile se calcule à partir de la surface de la pièce et de son épaisseur, en tenant compte du retrait. Le surplus de tournage est recyclé à hauteur du taux indiqué.</li>
+        <li>Le résultat est calculé avant votre rémunération et avant impôts. La trésorerie dégagée ajoute les amortissements, qui ne sont pas une dépense du mois.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Repères de prix</h3>
+      <ul>
+        <li><a href="https://ceradel.fr/en/collections/fours-electriques-frontaux?page=3" target="_blank" rel="noopener">Ceradel</a> : four 86 L à 1 300 °C, 6 300 € TTC ; 177 L, 6 250 € HT.</li>
+        <li><a href="https://solargil.com/gb/sculpture/3011-gres-st-amand-chamotte-0-05-3576841000693.html" target="_blank" rel="noopener">Solargil</a> : grès chamotté, 15,24 € TTC les 10 kg.</li>
+        <li><a href="https://selectra.info/energie/electricite/prix/trv" target="_blank" rel="noopener">Selectra</a> : tarif réglementé de l'électricité au 1<sup>er</sup> août 2026.</li>
+        <li>Les autres prix sont des fourchettes du marché français. Confirmez-les par devis.</li>
+      </ul>
+    </div>
+  </footer>
+</div>
+
+<div class="mbar" id="mbar">
+  <div><span>Résultat / mois</span><b id="mb-res"></b></div>
+  <div><span>Coût / pièce</span><b id="mb-cost"></b></div>
+  <div><span>Four</span><b id="mb-occ"></b></div>
+  <button class="btn" type="button" id="mb-go">Résultats</button>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const round = (x, d = 0) => { const k = Math.pow(10, d); return Math.round(x * k) / k; };
+
+const NF0 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 0});
+const NF1 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 1});
+const E0 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0, minimumFractionDigits: 0});
+const E2 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 2, minimumFractionDigits: 2});
+const eur = (x, d) => { if (x == null || !isFinite(x)) return '—'; const useTwo = d === 2 || (d == null && Math.abs(x) < 100); return (useTwo ? E2 : E0).format(x).replace('-', '−'); };
+const n0 = x => isFinite(x) ? NF0.format(x).replace('-', '−') : '—';
+const n1 = x => isFinite(x) ? NF1.format(x).replace('-', '−') : '—';
+const pct = x => isFinite(x) ? NF0.format(x * 100) + ' %' : '—';
+let seq = 0;
+const uid = p => p + Date.now().toString(36) + (++seq).toString(36);
+
+/* ---------- Données de référence ---------- */
+const CLAYS = {
+  faience:    {label: 'Faïence · émail vers 1 050 °C (cône 04)', prix: 1.0, retrait: 7, densite: 1.9, cru: 5, biscuit: 2, email: 4, kwhF: 0.65, wear: 0.5},
+  gres:       {label: 'Grès · émail vers 1 280 °C (cône 9)', prix: 1.3, retrait: 12, densite: 1.95, cru: 5, biscuit: 3, email: 6, kwhF: 1, wear: 1},
+  porcelaine: {label: 'Porcelaine · émail vers 1 280 °C (cône 9)', prix: 2.8, retrait: 14, densite: 2.0, cru: 8, biscuit: 4, email: 10, kwhF: 1.05, wear: 1.1},
+};
+const KILNS = {
+  '40':  {label: '40 L · chargement par le haut', volume: 40, kw: 3.6, prix: 2800, cycleB: 20, cycleE: 30},
+  '60':  {label: '60 L · chargement par le haut', volume: 60, kw: 4.6, prix: 4000, cycleB: 22, cycleE: 32},
+  '100': {label: '100 L · chargement par le haut', volume: 100, kw: 9, prix: 6400, cycleB: 22, cycleE: 34},
+  '120': {label: '120 L · chargement par le haut', volume: 120, kw: 11, prix: 7300, cycleB: 24, cycleE: 36},
+  '200': {label: '200 L · chargement par le haut', volume: 200, kw: 15, prix: 9500, cycleB: 26, cycleE: 40},
+  '300': {label: '300 L · porte frontale', volume: 300, kw: 22, prix: 16000, cycleB: 30, cycleE: 44},
+  '450': {label: '450 L · porte frontale', volume: 450, kw: 30, prix: 22000, cycleB: 34, cycleE: 48},
+  'perso': {label: 'Personnalisé'},
+};
+const KVA = [[6,15.95],[9,20.0],[12,24.1],[15,28.0],[18,31.9],[24,40.3],[30,48.0],[36,56.4]];
+const aboFor = kw => { const need = kw + 3; const row = KVA.find(r => r[0] >= need) || KVA[KVA.length - 1]; return {kva: row[0], surcout: round(row[1] - KVA[0][1], 1), over: need > 36}; };
+const kwhBase = v => 1.40 * Math.pow(Math.max(v, 1), 0.85);
+
+const MAT_BASE = [
+  ['Feldspath potassique', 2.2], ['Feldspath sodique', 2.2], ['Néphéline syénite', 2.6], ['Silice (quartz)', 1.4],
+  ['Kaolin', 1.8], ['Argile ball clay', 1.6], ['Carbonate de calcium (craie)', 1.5], ['Wollastonite', 2.8],
+  ['Dolomie', 1.5], ['Talc', 2.5], ['Carbonate de baryum', 4.5], ['Oxyde de zinc', 6], ['Fritte calcique', 6], ['Fritte borosilicatée', 7], ['Cendre de bois tamisée', 0.5],
+];
+const MAT_AJOUT = [
+  ['Oxyde de fer rouge', 12], ['Rutile', 22], ['Silicate de zircon (opacifiant)', 7], ["Oxyde d'étain", 80],
+  ['Oxyde de manganèse', 22], ['Carbonate de cuivre', 45], ['Oxyde de chrome', 60], ['Oxyde de cobalt', 180],
+  ['Carbonate de cobalt', 150], ['Pigment céramique (colorant prêt)', 90], ['Pigment rouge ou jaune (inclusion)', 180],
+];
+
+const PIECE_T = {
+  mug:      {nom: 'Mug', forme: 'cylindre', d: 8.5, h: 10, ep: 5, anse: 3, email: 'int-ext', decor: 0, poids: 0, minutes: 35, qte: 40, prix: 28},
+  bol:      {nom: 'Bol', forme: 'bol', d: 15, h: 7, ep: 5, anse: 0, email: 'int-ext', decor: 0, poids: 0, minutes: 25, qte: 30, prix: 24},
+  assiette: {nom: 'Assiette', forme: 'assiette', d: 26, h: 2.5, ep: 5, anse: 0, email: 'int-ext', decor: 0, poids: 0, minutes: 30, qte: 15, prix: 32},
+  vase:     {nom: 'Vase', forme: 'cylindre', d: 12, h: 25, ep: 6, anse: 0, email: 'ext', decor: 1.5, poids: 0, minutes: 50, qte: 10, prix: 55},
+  libre:    {nom: 'Pièce libre', forme: 'cylindre', d: 14, h: 18, ep: 7, anse: 0, email: 'ext', decor: 0, poids: 1500, minutes: 90, qte: 4, prix: 70},
+};
+const FORMES = {cylindre: 'Cylindre (mug, vase)', bol: 'Bol évasé', assiette: 'Assiette, plat'};
+const EMAILS = {'int-ext': 'Intérieur + extérieur', ext: 'Extérieur seul', int: 'Intérieur seul', aucun: 'Aucun (brut)'};
+
+const SCENARIOS = {
+  solo: {label: 'Démarrage solo', tag: '60 L', kiln: '60', heures: 110, conso: 30,
+    pieces: [['mug', 40, 26], ['bol', 30, 22], ['assiette', 15, 30]],
+    cours: false,
+    equip: [
+      ['Tour de potier (milieu de gamme)', 1300, 1, 10], ['Ligne électrique dédiée (électricien)', 500, 1, 10],
+      ["Kit d'enfournement (plaques, piliers)", 220, 1, 5], ['Outils de façonnage', 200, 1, 3],
+      ['Tables et étagères de séchage', 550, 1, 10], ['Évier et décanteur', 120, 1, 10],
+      ['Aspirateur HEPA et protections', 280, 1, 5], ["Matériel d'émaillage (balances, tamis, seaux)", 250, 1, 5],
+      ['Stock de départ : émaux et matières', 400, 1, 0], ['Stock de départ : argile', 200, 1, 0],
+    ]},
+  pro: {label: 'Pro solo', tag: '120 L', kiln: '120', heures: 150, conso: 50,
+    pieces: [['mug', 90, 28], ['bol', 70, 24], ['assiette', 40, 32], ['vase', 15, 55]],
+    cours: false,
+    equip: [
+      ['Tour de potier pro', 2000, 1, 10], ['Électricité : ligne dédiée et triphasé', 1500, 1, 10],
+      ["Hotte d'extraction du four", 800, 1, 10], ["Kit d'enfournement", 450, 1, 5],
+      ['Croûteuse', 1400, 1, 10], ['Boudineuse murale', 300, 1, 10], ['Outils de façonnage', 450, 1, 3],
+      ['Mobilier et étagères de séchage', 1800, 1, 10], ['Évier et décanteur', 500, 1, 10],
+      ['Aspiration HEPA et sécurité', 550, 1, 5], ["Matériel d'émaillage", 500, 1, 5],
+      ['Stock de départ : émaux et matières', 1400, 1, 0], ['Stock de départ : argile', 800, 1, 0],
+    ]},
+  cours: {label: 'Atelier avec cours', tag: '300 L', kiln: '300', heures: 160, conso: 90,
+    pieces: [['mug', 40, 28], ['bol', 30, 24], ['assiette', 10, 32]],
+    cours: true,
+    equip: [
+      ['Tours de potier (élèves)', 1400, 7, 10], ['Petit four de tests 50 L', 3500, 1, 10],
+      ['Électricité : triphasé et tableau', 2500, 1, 10], ["Hotte d'extraction du four", 1200, 1, 10],
+      ["Kit d'enfournement", 1100, 1, 5], ['Croûteuse', 1800, 1, 10], ['Boudineuse murale', 400, 1, 10],
+      ['Désaéreuse (recyclage de la terre)', 4500, 1, 10], ['Outils (8 postes)', 1100, 1, 3],
+      ['Mobilier et étagères de séchage', 4000, 1, 10], ['Éviers et décanteurs', 1400, 1, 10],
+      ['Aspiration HEPA et sécurité', 1000, 1, 5], ["Matériel d'émaillage", 700, 1, 5],
+      ['Stock de départ : émaux (seaux de trempage)', 2800, 1, 0], ['Stock de départ : argile', 1500, 1, 0],
+    ]},
+};
+
+/* ---------- État ---------- */
+function deriveFromVolume(S) {
+  const v = S.four.volume, cf = (CLAYS[S.argile.type] || CLAYS.gres).kwhF;
+  S.four.kwhB = round(0.58 * kwhBase(v), 1);
+  S.four.kwhE = round(kwhBase(v) * cf, 1);
+  S.usure.resistPrix = Math.max(200, Math.round(v * 6 / 10) * 10);
+  S.usure.plaques = round(Math.max(0.5, 1.5 * v / 100), 2);
+}
+function applyKiln(S, key) {
+  const k = KILNS[key]; if (!k || key === 'perso') return;
+  Object.assign(S.four, {preset: key, volume: k.volume, puissance: k.kw, prix: k.prix, cycleB: k.cycleB, cycleE: k.cycleE});
+  deriveFromVolume(S);
+  S.elec.abo = aboFor(k.kw).surcout;
+}
+function applyClay(S, key) {
+  const c = CLAYS[key]; if (!c) return;
+  Object.assign(S.argile, {type: key, prix: c.prix, retrait: c.retrait, densite: c.densite});
+  Object.assign(S.casse, {cru: c.cru, biscuit: c.biscuit, email: c.email});
+  S.four.kwhE = round(kwhBase(S.four.volume) * c.kwhF, 1);
+}
+function makeState(key) {
+  const sc = SCENARIOS[key];
+  const S = {
+    v: 1, scenario: key, dirty: false,
+    pieces: sc.pieces.map(([t, qte, prix]) => ({id: uid('p'), ...PIECE_T[t], qte, prix})),
+    argile: {type: 'gres', prix: 1.3, retrait: 12, densite: 1.95, surplus: 30, recup: 80},
+    casse: {cru: 5, biscuit: 3, email: 6},
+    email: {mode: 'maison', prixCommerce: 25, depot: 0.06, perte: 15,
+      base: [['Feldspath potassique', 40, 2.2], ['Silice (quartz)', 25, 1.4], ['Kaolin', 15, 1.8], ['Carbonate de calcium (craie)', 20, 1.5]].map(([nom, part, prix]) => ({id: uid('m'), nom, part, prix})),
+      ajouts: [['Oxyde de fer rouge', 3, 12], ['Oxyde de cobalt', 1, 180]].map(([nom, part, prix]) => ({id: uid('m'), nom, part, prix}))},
+    four: {preset: sc.kiln, volume: 100, puissance: 9, prix: 6400, vie: 10, remplissage: 60, empilement: 1.8, jeu: 1, plaque: 1.5, kwhB: 40, kwhE: 70, cycleB: 22, cycleE: 34, jours: 26},
+    elec: {prix: 0.2001, prixHC: 0.1589, partHC: 0, abo: 0},
+    usure: {resistPrix: 600, resistVie: 200, thermoPrix: 90, thermoVie: 150, plaques: 1.5},
+    cours: {actif: sc.cours, seances: 16, eleves: 7, prix: 38, duree: 3, argileKg: 1.2, pieces: 1, vol: 1.4, emailG: 40, conso: 0.6},
+    temps: {heures: sc.heures},
+    charges: {consommables: sc.conso, autres: 0, prel: 0},
+    equip: sc.equip.map(([nom, prix, qte, amort]) => ({id: uid('e'), nom, prix, qte, amort, actif: true})),
+  };
+  applyKiln(S, sc.kiln);
+  return S;
+}
+
+const STORE = 'atelier-ceramique-v1';
+let state;
+try { const raw = localStorage.getItem(STORE); if (raw) { const s = JSON.parse(raw); if (s && s.v === 1 && Array.isArray(s.pieces)) state = s; } } catch (e) {}
+if (!state) state = makeState('pro');
+let saveT;
+const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }, 300); };
+const getPath = (o, p) => p.split('.').reduce((a, k) => a == null ? a : a[k], o);
+const setPath = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a, k) => a[k], o); t[last] = v; };
+
+/* ---------- Calcul ---------- */
+function recipeCost(E) {
+  let parts = 0, cost = 0;
+  for (const r of [...E.base, ...E.ajouts]) { const pa = Math.max(0, num(r.part)); parts += pa; cost += pa * num(r.prix); }
+  return parts > 0 ? cost / parts : 0;
+}
+const emailPrice = S => S.email.mode === 'maison' ? recipeCost(S.email) : Math.max(0, num(S.email.prixCommerce));
+
+function geom(p, S) {
+  const D = Math.max(0.1, num(p.d)), H = Math.max(0.1, num(p.h)), ep = Math.max(0.5, num(p.ep)) / 10, r = D / 2;
+  let Sx, base;
+  if (p.forme === 'bol') { const r2 = 0.4 * r, sl = Math.hypot(H, r - r2); Sx = Math.PI * (r + r2) * sl + Math.PI * r2 * r2; base = Math.PI * r2 * r2; }
+  else if (p.forme === 'assiette') { Sx = Math.PI * r * r + Math.PI * D * H; base = 0.12 * Math.PI * r * r; }
+  else { Sx = Math.PI * D * H + Math.PI * r * r; base = Math.PI * r * r; }
+  const shrink = Math.pow(1 - clamp(num(S.argile.retrait) / 100, 0, 0.5), 3);
+  const dens = Math.max(0.5, num(S.argile.densite));
+  let wet = Sx * ep / shrink * dens;
+  if (num(p.poids) > 0) wet = num(p.poids);
+  const fired = wet * shrink / dens * 2.2;
+  const area = Math.max(0, ({'int-ext': 2 * Sx - base, ext: Sx - base, int: Sx, aucun: 0})[p.email] ?? 0);
+  const glazeG = area * Math.max(0, num(S.email.depot)) * (1 + Math.max(0, num(S.email.perte)) / 100);
+  const F = S.four, jeu = Math.max(0, num(F.jeu));
+  const vol = (D + Math.max(0, num(p.anse)) + jeu) * (D + jeu) * (H + jeu + Math.max(0, num(F.plaque))) / 1000;
+  return {surf: Sx, wet, thrown: wet * (1 + Math.max(0, num(S.argile.surplus)) / 100), fired, area, glazeG, vol};
+}
+
+function compute(S, scale = 1) {
+  const A = S.argile, C = S.casse, F = S.four, L = S.elec, U = S.usure, K = S.cours, CH = S.charges;
+  const clay = CLAYS[A.type] || CLAYS.gres;
+  const cC = clamp(num(C.cru) / 100, 0, 0.9), cB = clamp(num(C.biscuit) / 100, 0, 0.9), cE = clamp(num(C.email) / 100, 0, 0.9);
+  const recup = clamp(num(A.recup) / 100, 0, 1), surplus = Math.max(0, num(A.surplus) / 100);
+  const prixA = Math.max(0, num(A.prix)), prixE = emailPrice(S);
+  const hc = clamp(num(L.partHC) / 100, 0, 1);
+  const kwhP = num(L.prix) * (1 - hc) + num(L.prixHC) * hc;
+  const useful = Math.max(0.5, num(F.volume) * clamp(num(F.remplissage) / 100, 0.05, 1));
+  const emp = Math.max(1, num(F.empilement));
+  const wearHT = (num(U.resistVie) > 0 ? num(U.resistPrix) / num(U.resistVie) : 0) + (num(U.thermoVie) > 0 ? num(U.thermoPrix) / num(U.thermoVie) : 0);
+  const perB = {elec: num(F.kwhB) * kwhP, wear: 0.4 * wearHT + num(U.plaques)};
+  const perE = {elec: num(F.kwhE) * kwhP, wear: clay.wear * wearHT + num(U.plaques)};
+  const kE = 1 / (1 - cE), kB = kE / (1 - cB), kR = kB / (1 - cC);
+
+  const rows = S.pieces.map(p => {
+    const g = geom(p, S);
+    const q = Math.max(0, num(p.qte)) * scale;
+    const kgFull = g.wet / 1000 * (1 + surplus * (1 - recup));
+    const kgRawLoss = g.wet / 1000 * (1 + surplus) * (1 - recup);
+    return {p, g, q,
+      clayPer: (kB * kgFull + (kR - kB) * kgRawLoss) * prixA,
+      glazePer: kE * g.glazeG / 1000 * prixE,
+      decorPer: kE * Math.max(0, num(p.decor)),
+      volBPer: kB * g.vol / emp, volEPer: kE * g.vol,
+      hoursPer: kR * Math.max(0, num(p.minutes)) / 60,
+      perFiringE: Math.floor(useful / g.vol), perFiringB: Math.floor(useful * emp / g.vol)};
+  });
+
+  const coursOn = !!K.actif;
+  const nStud = coursOn ? Math.max(0, num(K.seances)) * Math.max(0, num(K.eleves)) : 0;
+  const cPieces = nStud * Math.max(0, num(K.pieces));
+  const coursVolB = cPieces * Math.max(0, num(K.vol)) / emp, coursVolE = cPieces * Math.max(0, num(K.vol));
+  const coursClay = nStud * Math.max(0, num(K.argileKg)) * prixA;
+  const coursGlaze = cPieces * Math.max(0, num(K.emailG)) / 1000 * prixE;
+  const coursConso = nStud * Math.max(0, num(K.conso));
+  const coursCA = nStud * Math.max(0, num(K.prix));
+  const coursHours = coursOn ? Math.max(0, num(K.seances)) * Math.max(0, num(K.duree)) : 0;
+
+  let prodVolB = 0, prodVolE = 0, qTot = 0, caProd = 0, prodHours = 0;
+  for (const r of rows) { prodVolB += r.q * r.volBPer; prodVolE += r.q * r.volEPer; qTot += r.q; caProd += r.q * Math.max(0, num(r.p.prix)); prodHours += r.q * r.hoursPer; }
+  const volB = prodVolB + coursVolB, volE = prodVolE + coursVolE;
+  const nB = volB > 1e-9 ? Math.ceil(volB / useful - 1e-9) : 0;
+  const nE = volE > 1e-9 ? Math.ceil(volE / useful - 1e-9) : 0;
+  const elecB = nB * perB.elec, wearB = nB * perB.wear, elecE = nE * perE.elec, wearE = nE * perE.wear;
+  const rB = volB > 1e-9 ? {elec: elecB / volB, wear: wearB / volB} : {elec: perB.elec / useful, wear: perB.wear / useful};
+  const rE = volE > 1e-9 ? {elec: elecE / volE, wear: wearE / volE} : {elec: perE.elec / useful, wear: perE.wear / useful};
+
+  const amortFour = num(F.vie) > 0 ? num(F.prix) / num(F.vie) / 12 : 0;
+  let amortEq = 0, invEq = 0, stock = 0;
+  for (const e of S.equip) { if (!e.actif) continue; const t = Math.max(0, num(e.prix)) * Math.max(0, num(e.qte)); if (num(e.amort) > 0) { invEq += t; amortEq += t / num(e.amort) / 12; } else stock += t; }
+  const fConso = Math.max(0, num(CH.consommables)), fAbo = Math.max(0, num(L.abo)), fAutres = Math.max(0, num(CH.autres));
+  const fixed = amortFour + amortEq + fConso + fAbo + fAutres;
+  const rFixed = volE > 1e-9 ? fixed / volE : 0;
+  const prel = clamp(num(CH.prel) / 100, 0, 0.9);
+
+  let prodCost = 0;
+  for (const r of rows) {
+    r.elecPer = r.volBPer * rB.elec + r.volEPer * rE.elec;
+    r.wearPer = r.volBPer * rB.wear + r.volEPer * rE.wear;
+    r.fixedPer = r.volEPer * rFixed;
+    r.cost = r.clayPer + r.glazePer + r.decorPer + r.elecPer + r.wearPer + r.fixedPer;
+    r.prix = Math.max(0, num(r.p.prix));
+    r.prelPer = r.prix * prel;
+    r.marge = r.prix - r.cost - r.prelPer;
+    r.margePct = r.prix > 0 ? r.marge / r.prix : NaN;
+    prodCost += r.q * r.cost;
+  }
+  let coursRow = null;
+  if (coursOn) {
+    const kp = Math.max(0, num(K.pieces)), kv = Math.max(0, num(K.vol));
+    const c = {clayPer: Math.max(0, num(K.argileKg)) * prixA, glazePer: kp * Math.max(0, num(K.emailG)) / 1000 * prixE,
+      decorPer: Math.max(0, num(K.conso)),
+      elecPer: kp * (kv / emp * rB.elec + kv * rE.elec), wearPer: kp * (kv / emp * rB.wear + kv * rE.wear), fixedPer: kp * kv * rFixed};
+    c.cost = c.clayPer + c.glazePer + c.decorPer + c.elecPer + c.wearPer + c.fixedPer;
+    c.prix = Math.max(0, num(K.prix)); c.prelPer = c.prix * prel; c.marge = c.prix - c.cost - c.prelPer; c.margePct = c.prix > 0 ? c.marge / c.prix : NaN;
+    coursRow = c;
+  }
+
+  const ca = caProd + coursCA;
+  let vClay = coursClay, vGlaze = coursGlaze, vDecor = 0;
+  for (const r of rows) { vClay += r.q * r.clayPer; vGlaze += r.q * r.glazePer; vDecor += r.q * r.decorPer; }
+  const vElec = elecB + elecE, vWear = wearB + wearE, vConso = coursConso, vPrel = ca * prel;
+  const varTot = vClay + vGlaze + vDecor + vElec + vWear + vConso + vPrel;
+  const result = ca - varTot - fixed;
+  const cash = result + amortFour + amortEq;
+  const dB = Math.max(1, Math.ceil(num(F.cycleB) / 24 - 1e-9)), dE = Math.max(1, Math.ceil(num(F.cycleE) / 24 - 1e-9));
+  const daysUsed = nB * dB + nE * dE;
+  const occ = num(F.jours) > 0 ? daysUsed / num(F.jours) : (daysUsed > 0 ? Infinity : 0);
+  const hours = prodHours + coursHours;
+  const hoursAvail = Math.max(0, num(S.temps.heures));
+  return {rows, coursRow, coursOn, nStud, cPieces, coursCA, coursHours, coursClay, coursGlaze,
+    prodVolB, prodVolE, volB, volE, nB, nE, useful, emp, perB, perE, kwhP, dB, dE, daysUsed, occ,
+    fillB: nB > 0 ? volB / (nB * useful) : 0, fillE: nE > 0 ? volE / (nE * useful) : 0,
+    kwhMonth: nB * num(F.kwhB) + nE * num(F.kwhE),
+    amortFour, amortEq, invEq, stock, fConso, fAbo, fAutres, fixed,
+    qTot, caProd, ca, vClay, vGlaze, vDecor, vElec, vWear, vConso, vPrel, varTot, result, cash,
+    prodCost, avgCost: qTot > 0 ? prodCost / qTot : NaN, prodHours, hours, hoursAvail,
+    hoursOcc: hoursAvail > 0 ? hours / hoursAvail : (hours > 0 ? Infinity : 0),
+    invest: Math.max(0, num(F.prix)) + invEq + stock, prixE};
+}
+
+function analyze(S) {
+  const R = compute(S, 1);
+  const Q = R.qTot;
+  R.capFour = null; R.capTemps = null; R.breakEven = null; R.curve = null;
+  if (Q > 0) {
+    const occAt = s => compute(S, s).occ;
+    if (occAt(0) > 1) R.capFour = 0;
+    else {
+      let lo = 0, hi = 1;
+      while (occAt(hi) <= 1 && hi < 4096) { lo = hi; hi *= 2; }
+      for (let i = 0; i < 36; i++) { const mid = (lo + hi) / 2; if (occAt(mid) <= 1) lo = mid; else hi = mid; }
+      R.capFour = lo * Q;
+    }
+    R.capTemps = R.prodHours > 0 ? Math.max(0, (R.hoursAvail - R.coursHours) / R.prodHours) * Q : Infinity;
+    const capMin = Math.min(R.capFour, R.capTemps);
+    let xMax = Math.max(Q * 1.8, Math.min(isFinite(capMin) ? capMin * 1.2 : Q * 2, Q * 4));
+    if (!(xMax > 0)) xMax = Q * 2;
+    const N = 140, pts = [];
+    for (let i = 0; i <= N; i++) { const x = xMax * i / N; const r = compute(S, x / Q); pts.push({x, y: r.result, nB: r.nB, nE: r.nE, occ: r.occ}); }
+    R.curve = {pts, xMax};
+    if (compute(S, 0).result >= 0) R.breakEven = 0;
+    else {
+      const sMax = Math.max(4, xMax / Q * 2);
+      for (let i = 1; i <= 800; i++) { const s = sMax * i / 800; if (compute(S, s).result >= 0) { R.breakEven = s * Q; break; } }
+    }
+  } else if (R.result >= 0 && R.coursOn) R.breakEven = 0;
+  return R;
+}
+
+/* ---------- Champs ---------- */
+const FIELDS = {
+  'f-argile': [
+    {p: 'argile.type', label: 'Type de terre', type: 'select', options: Object.fromEntries(Object.entries(CLAYS).map(([k, c]) => [k, c.label])), wide: true},
+    {p: 'argile.prix', label: "Prix de l'argile", unit: '€/kg', step: 0.05, hint: 'Grès en pain de 10 kg : 1 à 1,8 €/kg. Par palette : 20 à 30 % de moins.'},
+    {p: 'argile.retrait', label: 'Retrait total', unit: '%', step: 0.5, hint: 'Séchage et cuisson. Grès : 10 à 13 %.'},
+    {p: 'argile.densite', label: "Densité de l'argile crue", unit: 'g/cm³', step: 0.05, hint: 'De 1,8 à 2,0 pour une terre plastique.'},
+    {p: 'argile.surplus', label: 'Surplus au tournage', unit: '%', step: 1, hint: 'Tournassage, fond, centrage : 20 à 40 %.'},
+    {p: 'argile.recup', label: 'Part du surplus recyclée', unit: '%', step: 5, hint: "Le reste part à l'évier ou sèche trop."},
+  ],
+  'f-casse': [
+    {p: 'casse.cru', label: 'Casse au séchage', unit: '%', step: 0.5, hint: 'Fissures, pièces déformées. Recyclable.'},
+    {p: 'casse.biscuit', label: 'Casse au biscuit', unit: '%', step: 0.5},
+    {p: 'casse.email', label: "Casse ou défaut à l'émail", unit: '%', step: 0.5, hint: 'Coulures, collages, fêlures. Pièce invendable au prix normal.'},
+  ],
+  'f-email': [
+    {p: 'email.mode', label: "Source de l'émail", type: 'select', options: {maison: 'Recette maison (calculée ci-dessous)', commerce: 'Émail du commerce'}, wide: true},
+    {p: 'email.prixCommerce', label: "Prix de l'émail du commerce", unit: '€/kg sec', step: 0.5, hint: 'En poudre : 15 à 35 €/kg. Liquide au pinceau : 40 à 60 €/kg sec.', id: 'fw-prixCommerce'},
+    {p: 'email.depot', label: 'Dépôt sur la pièce', unit: 'g/cm²', step: 0.005, hint: 'Trempage : 0,04 à 0,08.'},
+    {p: 'email.perte', label: 'Perte (égouttures, seau)', unit: '%', step: 1},
+  ],
+  'f-four': [
+    {p: 'four.preset', label: 'Modèle', type: 'select', options: Object.fromEntries(Object.entries(KILNS).map(([k, c]) => [k, c.label])), wide: true},
+    {p: 'four.volume', label: 'Volume intérieur', unit: 'L', step: 5},
+    {p: 'four.puissance', label: 'Puissance', unit: 'kW', step: 0.1},
+    {p: 'four.prix', label: "Prix d'achat", unit: '€', step: 100, hint: 'Occasion : 30 à 50 % de moins. Vérifiez briques, résistances et programmateur.'},
+    {p: 'four.vie', label: "Durée d'amortissement", unit: 'ans', step: 1},
+  ],
+  'f-charge': [
+    {p: 'four.remplissage', label: 'Taux de chargement', unit: '%', step: 1},
+    {p: 'four.empilement', label: 'Gain au biscuit (empilage)', unit: '×', step: 0.1, hint: 'Au biscuit, les pièces se touchent et s’emboîtent : 1,5 à 2.'},
+    {p: 'four.jeu', label: 'Espace entre pièces', unit: 'cm', step: 0.5},
+    {p: 'four.plaque', label: 'Plaque et marge en hauteur', unit: 'cm', step: 0.5},
+    {p: 'four.kwhB', label: 'Énergie par biscuit', unit: 'kWh', step: 1},
+    {p: 'four.kwhE', label: "Énergie par cuisson d'émail", unit: 'kWh', step: 1},
+    {p: 'four.cycleB', label: 'Cycle du biscuit', unit: 'h', step: 1, hint: 'Chauffe et refroidissement.'},
+    {p: 'four.cycleE', label: "Cycle de l'émail", unit: 'h', step: 1, hint: 'Chauffe et refroidissement.'},
+    {p: 'four.jours', label: 'Jours de four disponibles', unit: 'j/mois', step: 1, hint: 'Jours où vous pouvez charger et décharger.'},
+  ],
+  'f-elec': [
+    {p: 'elec.prix', label: 'Prix du kWh (base ou heures pleines)', unit: '€/kWh', step: 0.001},
+    {p: 'elec.prixHC', label: 'Prix du kWh en heures creuses', unit: '€/kWh', step: 0.001},
+    {p: 'elec.partHC', label: 'Part des cuissons en heures creuses', unit: '%', step: 5, hint: '0 % en option Base.'},
+    {p: 'elec.abo', label: "Surcoût d'abonnement", unit: '€/mois', step: 0.5, hint: 'Passage à un compteur plus puissant que 6 kVA.'},
+  ],
+  'f-usure': [
+    {p: 'usure.resistPrix', label: 'Jeu de résistances', unit: '€', step: 10},
+    {p: 'usure.resistVie', label: 'Durée de vie des résistances', unit: 'cuissons', step: 10, hint: 'Cuissons haute température : 100 à 300.'},
+    {p: 'usure.thermoPrix', label: 'Thermocouple', unit: '€', step: 5},
+    {p: 'usure.thermoVie', label: 'Durée de vie du thermocouple', unit: 'cuissons', step: 10},
+    {p: 'usure.plaques', label: 'Plaques, piliers, enduit, cônes', unit: '€/cuisson', step: 0.1},
+  ],
+  'f-cours': [
+    {p: 'cours.seances', label: 'Séances par mois', unit: '/mois', step: 1},
+    {p: 'cours.eleves', label: 'Élèves par séance', unit: 'élèves', step: 1},
+    {p: 'cours.prix', label: 'Prix par élève et séance', unit: '€', step: 1, hint: 'En France : 30 à 50 € la séance de 2 à 3 h.'},
+    {p: 'cours.duree', label: 'Votre temps par séance', unit: 'h', step: 0.5, hint: 'Préparation et rangement compris.'},
+    {p: 'cours.argileKg', label: 'Argile consommée par élève', unit: 'kg', step: 0.1},
+    {p: 'cours.pieces', label: 'Pièces cuites par élève', unit: '/séance', step: 0.1},
+    {p: 'cours.vol', label: 'Place au four par pièce', unit: 'L', step: 0.1, hint: 'Un bol moyen prend environ 1,5 L.'},
+    {p: 'cours.emailG', label: 'Émail par pièce', unit: 'g', step: 5},
+    {p: 'cours.conso', label: 'Consommables par élève', unit: '€', step: 0.1},
+  ],
+  'f-temps': [
+    {p: 'temps.heures', label: "Heures disponibles à l'atelier", unit: 'h/mois', step: 5, hint: 'Un temps plein fait environ 150 h. Comptez ensuite la vente et la gestion à part.'},
+  ],
+  'f-charges': [
+    {p: 'charges.consommables', label: "Consommables de l'atelier", unit: '€/mois', step: 5},
+    {p: 'charges.autres', label: 'Autres charges fixes (facultatif)', unit: '€/mois', step: 10, hint: 'Loyer, assurance, site web.'},
+    {p: 'charges.prel', label: 'Prélèvements sur les ventes', unit: '% du CA', step: 0.5, hint: 'Commissions de boutique ou de plateforme, cotisations sur le chiffre d’affaires.'},
+  ],
+};
+const fid = p => 'f-' + p.replace(/\./g, '-');
+function fieldHTML(f) {
+  const id = fid(f.p);
+  const hint = f.hint ? `<span class="f-hint">${f.hint}</span>` : '';
+  const wrapId = f.id ? ` id="${f.id}"` : '';
+  const style = f.wide ? ' style="grid-column:1/-1;max-width:420px"' : '';
+  if (f.type === 'select') {
+    const opts = Object.entries(f.options).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join('');
+    return `<label class="field" for="${id}"${wrapId}${style}><span class="f-label">${f.label}</span><select id="${id}" data-path="${f.p}">${opts}</select>${hint}</label>`;
+  }
+  return `<label class="field" for="${id}"${wrapId}${style}><span class="f-label">${f.label}</span><span class="f-input"><input id="${id}" type="number" inputmode="decimal" min="0" step="${f.step || 'any'}" data-path="${f.p}"><span class="f-unit">${f.unit || ''}</span></span>${hint}</label>`;
+}
+for (const [cid, list] of Object.entries(FIELDS)) $('#' + cid).innerHTML = list.map(fieldHTML).join('');
+
+function syncInputs() {
+  for (const el of $$('[data-path]')) {
+    const v = getPath(state, el.dataset.path);
+    if (el.type === 'checkbox') el.checked = !!v;
+    else if (document.activeElement !== el) el.value = (typeof v === 'number') ? String(round(v, 4)) : (v ?? '');
+  }
+  $('#cours-fs').disabled = !state.cours.actif;
+  const maison = state.email.mode === 'maison';
+  $('#recipe-block').hidden = !maison;
+  $('#fw-prixCommerce').hidden = maison;
+}
+
+/* ---------- Pièces ---------- */
+function profileSVG(p, k) {
+  const D = Math.max(0.1, num(p.d)), H = Math.max(0.1, num(p.h)), a = Math.max(0, num(p.anse));
+  const w = D * k, h = Math.max(3, H * k), aw = a * k;
+  const left = (100 - (w + aw * 0.9)) / 2, bottom = 92, top = bottom - h;
+  let body = '', handle = '';
+  if (p.forme === 'bol') {
+    const bl = left + w * 0.3, br = left + w * 0.7;
+    body = `M${left},${top} C${left},${top + h * 0.8} ${bl - w * 0.06},${bottom} ${bl},${bottom} L${br},${bottom} C${br + w * 0.06},${bottom} ${left + w},${top + h * 0.8} ${left + w},${top}`;
+  } else if (p.forme === 'assiette') {
+    body = `M${left},${top} L${left + w * 0.14},${bottom} L${left + w * 0.86},${bottom} L${left + w},${top}`;
+  } else {
+    body = `M${left},${top} L${left},${bottom} L${left + w},${bottom} L${left + w},${top}`;
+    if (a > 0) { const x = left + w, y1 = top + h * 0.2, y2 = top + h * 0.72, c = aw * 1.3; handle = `<path d="M${x},${y1} C${x + c},${y1} ${x + c},${y2} ${x},${y2}" fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linecap="round"/>`; }
+  }
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="Profil : ${esc(FORMES[p.forme] || '')}, diamètre ${n1(D)} cm, hauteur ${n1(H)} cm"><line x1="4" x2="96" y1="${bottom + 0.8}" y2="${bottom + 0.8}" stroke="var(--line-strong)" stroke-width="1"/><path d="${body} Z" fill="var(--accent-soft)" stroke="none"/><path d="${body}" fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>${handle}</svg>`;
+}
+function figScale() {
+  let m = 1;
+  for (const p of state.pieces) m = Math.max(m, num(p.d) + num(p.anse) * 0.9, num(p.h));
+  return 84 / m;
+}
+const pf = (p, key, label, unit, step) => {
+  const id = `pc-${p.id}-${key}`;
+  return `<label class="field" for="${id}"><span class="f-label">${label}</span><span class="f-input"><input id="${id}" type="number" inputmode="decimal" min="0" step="${step}" data-piece="${p.id}" data-key="${key}" value="${esc(p[key])}"><span class="f-unit">${unit}</span></span></label>`;
+};
+const psel = (p, key, label, opts) => {
+  const id = `pc-${p.id}-${key}`;
+  return `<label class="field" for="${id}"><span class="f-label">${label}</span><select id="${id}" data-piece="${p.id}" data-key="${key}">${Object.entries(opts).map(([k, v]) => `<option value="${k}"${p[key] === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>`;
+};
+function renderPieces() {
+  const list = $('#pieces-list');
+  if (!state.pieces.length) { list.innerHTML = '<div class="group"><p class="empty">Aucune pièce. Ajoutez un mug, un bol ou une assiette ci-dessus pour lancer le calcul.</p></div>'; return; }
+  list.innerHTML = state.pieces.map(p => `
+    <article class="piece" data-id="${p.id}">
+      <div class="piece-fig"><div id="fig-${p.id}"></div><span class="dims" id="dims-${p.id}"></span></div>
+      <div>
+        <div class="piece-head">
+          <input class="piece-name" id="pn-${p.id}" data-piece="${p.id}" data-key="nom" value="${esc(p.nom)}" aria-label="Nom de la pièce">
+          <button class="btn-ghost" type="button" data-act="dup" data-id="${p.id}">Dupliquer</button>
+          <button class="btn-ghost danger" type="button" data-act="del-piece" data-id="${p.id}" aria-label="Supprimer ${esc(p.nom)}">Supprimer</button>
+        </div>
+        <div class="fields">
+          <p class="sub-h">Dimensions après cuisson</p>
+          ${psel(p, 'forme', 'Forme', FORMES)}
+          ${pf(p, 'd', 'Diamètre', 'cm', 0.5)}
+          ${pf(p, 'h', p.forme === 'assiette' ? 'Hauteur du bord' : 'Hauteur', 'cm', 0.5)}
+          ${pf(p, 'ep', 'Épaisseur de paroi', 'mm', 0.5)}
+          ${pf(p, 'anse', 'Anse ou débord', 'cm', 0.5)}
+          ${pf(p, 'poids', 'Poids cru imposé', 'g', 50)}
+          <p class="sub-h">Finition, temps et vente</p>
+          ${psel(p, 'email', 'Émaillage', EMAILS)}
+          ${pf(p, 'decor', 'Décor (engobe, lustre…)', '€/pièce', 0.1)}
+          ${pf(p, 'minutes', 'Temps de travail', 'min', 5)}
+          ${pf(p, 'qte', 'Ventes par mois', 'pièces', 1)}
+          ${pf(p, 'prix', 'Prix de vente', '€', 0.5)}
+        </div>
+        <div class="piece-spec" id="spec-${p.id}"></div>
+      </div>
+    </article>`).join('');
+}
+function updatePieceVisuals(R) {
+  const k = figScale();
+  $('#count-pieces').textContent = state.pieces.length;
+  for (const r of R.rows) {
+    const p = r.p, fig = $('#fig-' + p.id); if (!fig) continue;
+    fig.innerHTML = profileSVG(p, k);
+    $('#dims-' + p.id).textContent = `Ø ${n1(num(p.d))} × H ${n1(num(p.h))} cm`;
+    const g = r.g;
+    $('#spec-' + p.id).innerHTML = [
+      `Argile crue <b>${n0(g.wet)} g</b>`,
+      `à tourner <b>${n0(g.thrown)} g</b>`,
+      `cuite ≈ <b>${n0(g.fired)} g</b>`,
+      `émail <b>${n0(g.glazeG)} g</b> sur ${n0(g.area)} cm²`,
+      `<b>${n0(r.perFiringE)}</b> par cuisson d'émail`,
+      `<b>${n0(r.perFiringB)}</b> par biscuit`,
+    ].map(t => `<span class="spec">${t}</span>`).join('') + `<span class="spec cost">Coût de revient <b>${eur(r.cost, 2)}</b> · marge <b>${eur(r.marge, 2)}</b></span>`;
+    const lab = $(`label[for="pc-${p.id}-h"] .f-label`); if (lab) lab.textContent = p.forme === 'assiette' ? 'Hauteur du bord' : 'Hauteur';
+  }
+}
+
+/* ---------- Recette et équipement ---------- */
+function renderRecipe() {
+  const rows = (arr, kind) => {
+    const head = `<div class="erow head"><span>Matière</span><span class="num">Parts</span><span class="num">€/kg</span><span class="num">Coût / kg</span><span></span></div>`;
+    const tot = arr.reduce((a, r) => a + Math.max(0, num(r.part)), 0);
+    const body = arr.map(r => `<div class="erow">
+        <input class="txt" id="rc-${r.id}-nom" data-rec="${kind}" data-id="${r.id}" data-key="nom" value="${esc(r.nom)}" aria-label="Matière">
+        <span class="cell" data-l="Parts"><input class="mini" id="rc-${r.id}-part" type="number" min="0" step="0.5" data-rec="${kind}" data-id="${r.id}" data-key="part" value="${esc(r.part)}" aria-label="Parts de ${esc(r.nom)}"></span>
+        <span class="cell" data-l="Prix (€/kg)"><input class="mini" id="rc-${r.id}-prix" type="number" min="0" step="0.1" data-rec="${kind}" data-id="${r.id}" data-key="prix" value="${esc(r.prix)}" aria-label="Prix au kg de ${esc(r.nom)}"></span>
+        <span class="cell num" data-l="Coût dans 1 kg"><span id="rc-${r.id}-tot"></span></span>
+        <button class="btn-ghost danger" type="button" data-act="del-rec" data-kind="${kind}" data-id="${r.id}" aria-label="Retirer ${esc(r.nom)}">×</button>
+      </div>`).join('');
+    return head + body + `<div class="efoot"><span>Total</span><span id="rec-tot-${kind}">${n1(tot)} parts</span></div>`;
+  };
+  $('#rec-base').innerHTML = rows(state.email.base, 'base');
+  $('#rec-ajouts').innerHTML = rows(state.email.ajouts, 'ajouts');
+}
+function updateRecipe() {
+  const all = [...state.email.base, ...state.email.ajouts];
+  const parts = all.reduce((a, r) => a + Math.max(0, num(r.part)), 0);
+  for (const r of all) { const el = $(`#rc-${r.id}-tot`); if (el) el.textContent = parts > 0 ? eur(Math.max(0, num(r.part)) * num(r.prix) / parts, 2) : '—'; }
+  const tb = state.email.base.reduce((a, r) => a + Math.max(0, num(r.part)), 0);
+  const ta = state.email.ajouts.reduce((a, r) => a + Math.max(0, num(r.part)), 0);
+  const e1 = $('#rec-tot-base'); if (e1) e1.textContent = n1(tb) + ' parts';
+  const e2 = $('#rec-tot-ajouts'); if (e2) e2.textContent = n1(ta) + ' parts';
+  $('#rec-cost').textContent = eur(recipeCost(state.email), 2);
+  $('#rec-note').textContent = Math.abs(tb - 100) > 0.01 ? `La base fait ${n1(tb)} parts au lieu de 100 : le coût reste juste, il est ramené au kilo.` : '';
+}
+function fillAddSelects() {
+  const opt = list => '<option value="">Ajouter une matière…</option>' + list.map(([n, p], i) => `<option value="${i}">${esc(n)} · ${eur(p, 2)}/kg</option>`).join('');
+  $('#add-base').innerHTML = opt(MAT_BASE);
+  $('#add-ajout').innerHTML = opt(MAT_AJOUT).replace('Ajouter une matière…', 'Ajouter un oxyde ou un colorant…');
+}
+function renderEquip() {
+  const head = `<div class="erow head"><span></span><span>Équipement</span><span class="num">Prix unitaire</span><span class="num">Qté</span><span class="num">Amort. (ans)</span><span class="num">Total</span><span></span></div>`;
+  const body = state.equip.map(e => `<div class="erow${e.actif ? '' : ' off'}" id="eqr-${e.id}">
+      <input type="checkbox" id="eq-${e.id}-actif" data-eq="${e.id}" data-key="actif"${e.actif ? ' checked' : ''} aria-label="Inclure ${esc(e.nom)}">
+      <input class="txt" id="eq-${e.id}-nom" data-eq="${e.id}" data-key="nom" value="${esc(e.nom)}" aria-label="Équipement">
+      <span class="cell" data-l="Prix unitaire (€)"><input class="mini" id="eq-${e.id}-prix" type="number" min="0" step="10" data-eq="${e.id}" data-key="prix" value="${esc(e.prix)}" aria-label="Prix unitaire de ${esc(e.nom)}"></span>
+      <span class="cell" data-l="Quantité"><input class="mini" id="eq-${e.id}-qte" type="number" min="0" step="1" data-eq="${e.id}" data-key="qte" value="${esc(e.qte)}" aria-label="Quantité de ${esc(e.nom)}"></span>
+      <span class="cell" data-l="Amortissement (ans)"><input class="mini" id="eq-${e.id}-amort" type="number" min="0" step="1" data-eq="${e.id}" data-key="amort" value="${esc(e.amort)}" aria-label="Durée d'amortissement de ${esc(e.nom)}"></span>
+      <span class="cell num" data-l="Total"><span id="eqt-${e.id}"></span></span>
+      <button class="btn-ghost danger" type="button" data-act="del-eq" data-id="${e.id}" aria-label="Supprimer ${esc(e.nom)}">×</button>
+    </div>`).join('');
+  $('#equip-table').innerHTML = head + body + `<div class="efoot"><span>Total équipements et stocks (hors four)</span><span id="eq-foot"></span></div>`;
+}
+function updateEquip(R) {
+  for (const e of state.equip) {
+    const el = $('#eqt-' + e.id); if (el) el.textContent = eur(Math.max(0, num(e.prix)) * Math.max(0, num(e.qte)), 0);
+    const row = $('#eqr-' + e.id); if (row) row.classList.toggle('off', !e.actif);
+  }
+  $('#eq-foot').textContent = eur(R.invEq + R.stock, 0);
+}
+
+/* ---------- Résultats ---------- */
+const SERIES = [
+  {k: 'clayPer', label: 'Argile', c: 'var(--s1)'},
+  {k: 'glazePer', label: 'Émail et pigments', c: 'var(--s2)'},
+  {k: 'decorPer', label: 'Décor, consommables', c: 'var(--s3)'},
+  {k: 'elecPer', label: 'Électricité', c: 'var(--s4)'},
+  {k: 'wearPer', label: 'Usure du four', c: 'var(--s5)'},
+  {k: 'fixedPer', label: 'Frais fixes', c: 'var(--s6)'},
+];
+function kpi(label, value, sub, tone) { return `<div class="kpi"><span class="k-label">${label}</span><span class="k-value${tone ? ' tone-' + tone : ''}">${value}</span><span class="k-sub">${sub}</span></div>`; }
+function meter(label, ratio, right, sub) {
+  const cls = ratio > 1 ? 'bad' : ratio > 0.85 ? 'warn' : '';
+  const w = isFinite(ratio) ? clamp(ratio, 0, 1) * 100 : 100;
+  return `<div><div class="meter-h"><span>${label}</span><span>${right}</span></div><div class="meter ${cls}" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${isFinite(ratio) ? Math.round(ratio * 100) : 100}" aria-label="${label}"><i style="width:${w}%"></i></div><div class="meter-sub">${sub}</div></div>`;
+}
+function renderResults(R) {
+  const S = state;
+  // héros
+  const kr = $('#k-result');
+  kr.textContent = eur(R.result, 0);
+  kr.className = 'k-value ' + (R.result >= 0 ? 'tone-good' : 'tone-bad');
+  $('#k-result-sub').textContent = `avant votre rémunération · chiffre d'affaires ${eur(R.ca, 0)}`;
+
+  const perHour = R.hours > 0 ? R.result / R.hours : NaN;
+  const roi = R.cash > 0 ? R.invest / R.cash : NaN;
+  let beTxt = '—', beSub = 'à répartition constante';
+  if (R.breakEven === 0) { beTxt = '0 pièce'; beSub = R.coursOn ? 'les cours couvrent déjà les charges' : 'charges couvertes'; }
+  else if (R.breakEven != null) { beTxt = `${n0(Math.ceil(R.breakEven))} pièces`; beSub = `par mois, sur ${n0(R.qTot)} prévues`; }
+  else { beTxt = 'Non atteint'; beSub = 'les prix ne couvrent pas les coûts'; }
+  $('#kpis').innerHTML = [
+    kpi('Investissement de départ', eur(R.invest, 0), `dont four ${eur(num(S.four.prix), 0)}`),
+    kpi('Coût de revient moyen', eur(R.avgCost, 2), R.qTot > 0 ? `par pièce vendue (${n0(R.qTot)} / mois)` : 'aucune pièce vendue'),
+    kpi('Point mort', beTxt, beSub, R.breakEven != null && R.breakEven <= R.qTot ? 'good' : (R.breakEven == null ? 'bad' : '')),
+    kpi('Retour sur investissement', isFinite(roi) ? `${n0(Math.ceil(roi))} mois` : '—', R.cash > 0 ? `trésorerie dégagée ${eur(R.cash, 0)}/mois` : 'aucune trésorerie dégagée'),
+    kpi('Par heure de travail', eur(perHour, 2), `${n0(R.hours)} h par mois`),
+    kpi('Énergie des cuissons', `${n0(R.kwhMonth)} kWh`, `${eur(R.vElec, 0)} par mois`),
+  ].join('');
+
+  $('#meters').innerHTML =
+    meter('Occupation du four', R.occ, isFinite(R.occ) ? pct(R.occ) : '—', `${n0(R.nB)} biscuit${R.nB > 1 ? 's' : ''} × ${R.dB} j + ${n0(R.nE)} émail${R.nE > 1 ? 's' : ''} × ${R.dE} j = ${n0(R.daysUsed)} jours sur ${n0(num(S.four.jours))}`) +
+    meter('Votre temps', R.hoursOcc, isFinite(R.hoursOcc) ? pct(R.hoursOcc) : '—', `${n0(R.hours)} h nécessaires sur ${n0(R.hoursAvail)} h disponibles`);
+
+  // alertes
+  const al = [];
+  if (R.occ > 1) al.push(['bad', '!', `<b>Four saturé.</b> Il faut ${n0(R.daysUsed)} jours de cuisson pour ${n0(num(S.four.jours))} disponibles. Prenez un four plus grand, ajoutez-en un second ou réduisez le volume.`]);
+  else if (R.occ > 0.85) al.push(['warn', '!', `<b>Four presque plein</b> (${pct(R.occ)}). Une fournée ratée ou une commande de plus et le planning déborde.`]);
+  if (R.hoursOcc > 1) al.push(['bad', '!', `<b>Pas assez de temps.</b> Ce volume demande ${n0(R.hours)} h par mois pour ${n0(R.hoursAvail)} h disponibles. C’est vous, et non le four, qui limitez la production.`]);
+  const fill = R.nE > 0 ? R.fillE : 1;
+  if (R.nE > 0 && fill < 0.75) al.push(['warn', '!', `<b>Cuissons d’émail remplies à ${pct(fill)}.</b> Regroupez vos pièces : un four plein divise le coût de cuisson par pièce.`]);
+  for (const r of R.rows) if (r.q > 0 && r.marge < 0) al.push(['bad', '!', `<b>${esc(r.p.nom)} vendu à perte</b> : ${eur(r.marge, 2)} par pièce.`]);
+  if (R.coursRow && R.coursRow.marge < 0) al.push(['bad', '!', `<b>Cours vendus à perte</b> : ${eur(R.coursRow.marge, 2)} par élève et par séance.`]);
+  const kw = num(S.four.puissance), ab = aboFor(kw);
+  if (kw <= 3.7) al.push(['info', 'i', `<b>Branchement :</b> ${n1(kw)} kW passent sur une prise 16 A dédiée.`]);
+  else if (kw <= 7.4) al.push(['info', 'i', `<b>Branchement :</b> ${n1(kw)} kW demandent une ligne dédiée de 32 A en monophasé et un compteur d’au moins ${ab.kva} kVA.`]);
+  else al.push(['info', 'i', `<b>Branchement :</b> ${n1(kw)} kW, le triphasé est conseillé${ab.over ? ', au-delà de 36 kVA il faut un contrat professionnel (tarif jaune)' : `, avec un compteur d’au moins ${ab.kva} kVA`}. Vérifiez votre compteur avant d’acheter.`]);
+  if (R.result >= 0 && R.occ <= 1 && R.hoursOcc <= 1 && al.every(a => a[0] === 'info')) al.unshift(['good', '✓', `<b>Le plan tient</b> : le four et votre temps suffisent, et chaque pièce dégage une marge.`]);
+  $('#alerts').innerHTML = al.map(([t, i, m]) => `<li class="alert ${t}"><span class="ico" aria-hidden="true">${i}</span><span><span class="sr-only" style="position:absolute;left:-9999px">${({bad: 'Critique', warn: 'Attention', info: 'Information', good: 'Bon'})[t]} : </span>${m}</span></li>`).join('');
+
+  // barres
+  $('#bar-legend').innerHTML = SERIES.map(s => `<span><i style="background:${s.c}"></i>${s.label}</span>`).join('') + '<span><i class="tick"></i>Prix de vente</span>';
+  const items = R.rows.map(r => ({name: r.p.nom || 'Sans nom', r, unit: ''}));
+  if (R.coursRow) items.push({name: 'Cours (par élève et séance)', r: R.coursRow, unit: ''});
+  if (!items.length) { $('#bars').innerHTML = '<p class="empty">Ajoutez une pièce dans l’onglet Pièces.</p>'; $('#cost-table').innerHTML = ''; }
+  else {
+    const maxV = Math.max(1e-9, ...items.map(it => Math.max(it.r.cost, it.r.prix)));
+    $('#bars').innerHTML = items.map(it => {
+      const segs = SERIES.map(s => ({s, v: Math.max(0, it.r[s.k])})).filter(x => x.v > 0.0001);
+      const segHTML = segs.map((x, i) => `<div class="seg${i === segs.length - 1 ? ' last' : ''}" style="width:${x.v / maxV * 100}%;background:${x.s.c}" data-tip="${esc(it.name)} · ${x.s.label} : ${eur(x.v, 2)}"></div>`).join('');
+      const tick = it.r.prix > 0 ? `<div class="price-tick" style="left:${it.r.prix / maxV * 100}%"></div>` : '';
+      return `<div><div class="bar-head"><span class="bar-name">${esc(it.name)}</span><span class="bar-val">coût <b>${eur(it.r.cost, 2)}</b> · prix ${eur(it.r.prix, 2)} · marge <b class="${it.r.marge >= 0 ? 'tone-good' : 'tone-bad'}">${eur(it.r.marge, 2)}</b></span></div><div class="bar-track" role="img" aria-label="${esc(it.name)} : coût ${eur(it.r.cost, 2)}, prix ${eur(it.r.prix, 2)}">${segHTML}${tick}</div></div>`;
+    }).join('');
+    $('#cost-table').innerHTML = `<table class="data"><thead><tr><th>Pièce</th>${SERIES.map(s => `<th>${s.label}</th>`).join('')}<th>Coût</th><th>Prix</th><th>Prélèv.</th><th>Marge</th><th>Marge %</th></tr></thead><tbody>` +
+      items.map(it => `<tr><td>${esc(it.name)}</td>${SERIES.map(s => `<td>${eur(it.r[s.k], 2)}</td>`).join('')}<td><b>${eur(it.r.cost, 2)}</b></td><td>${eur(it.r.prix, 2)}</td><td>${eur(it.r.prelPer, 2)}</td><td>${eur(it.r.marge, 2)}</td><td>${pct(it.r.margePct)}</td></tr>`).join('') + '</tbody></table>';
+  }
+
+  // compte mensuel
+  const L = (label, v, cls = '') => `<tr class="${cls}"><th scope="row">${label}</th><td>${eur(v, 0)}</td></tr>`;
+  const neg = v => -v;
+  let pl = L('Ventes de pièces', R.caProd);
+  if (R.coursOn) pl += L(`Cours (${n0(R.nStud)} places)`, R.coursCA);
+  pl += L("Chiffre d'affaires", R.ca, 'tot');
+  pl += L('Argile', neg(R.vClay), 'sub') + L('Émail et pigments', neg(R.vGlaze), 'sub');
+  if (R.vDecor > 0) pl += L('Décor', neg(R.vDecor), 'sub');
+  pl += L('Électricité des cuissons', neg(R.vElec), 'sub') + L('Usure du four', neg(R.vWear), 'sub');
+  if (R.vConso > 0) pl += L('Consommables des cours', neg(R.vConso), 'sub');
+  if (R.vPrel > 0) pl += L('Prélèvements sur les ventes', neg(R.vPrel), 'sub');
+  pl += L('Marge sur coûts variables', R.ca - R.varTot, 'tot');
+  pl += L('Amortissement du four', neg(R.amortFour), 'sub') + L('Amortissement des équipements', neg(R.amortEq), 'sub') + L("Consommables de l'atelier", neg(R.fConso), 'sub') + L("Surcoût d'abonnement électrique", neg(R.fAbo), 'sub');
+  if (R.fAutres > 0) pl += L('Autres charges fixes', neg(R.fAutres), 'sub');
+  pl += L('Résultat avant rémunération', R.result, 'tot final');
+  pl += L('Trésorerie dégagée (résultat + amortissements)', R.cash, 'note');
+  $('#pl').innerHTML = pl;
+
+  // four
+  const T = (label, v, cls = '') => `<tr class="${cls}"><th scope="row">${label}</th><td>${v}</td></tr>`;
+  const capTxt = c => c == null ? '—' : (!isFinite(c) ? 'illimitée' : `${n0(Math.floor(c))} pièces / mois`);
+  $('#kiln-table').innerHTML =
+    T('Biscuits par mois', `${n0(R.nB)} · remplis à ${pct(R.fillB)}`) +
+    T("Cuissons d'émail par mois", `${n0(R.nE)} · remplies à ${pct(R.fillE)}`) +
+    T('Volume utile par cuisson', `${n1(R.useful)} L`) +
+    T("Coût d'un biscuit", `${eur(R.perB.elec + R.perB.wear, 2)} <span style="color:var(--muted)">(${eur(R.perB.elec, 2)} d'électricité)</span>`) +
+    T("Coût d'une cuisson d'émail", `${eur(R.perE.elec + R.perE.wear, 2)} <span style="color:var(--muted)">(${eur(R.perE.elec, 2)} d'électricité)</span>`) +
+    T('Prix moyen du kWh', `${n1(R.kwhP * 100)} c€`) +
+    T('Capacité maximale du four', capTxt(R.capFour), 'tot') +
+    T('Capacité maximale de votre temps', capTxt(R.capTemps));
+
+  $('#inv-table').innerHTML =
+    L('Four', Math.max(0, num(S.four.prix))) + L('Équipements amortis', R.invEq) + L('Stocks de départ', R.stock) +
+    L('Total', R.invest, 'tot') + L('Amortissement mensuel', R.amortFour + R.amortEq, 'note');
+
+  // barre mobile
+  $('#mb-res').textContent = eur(R.result, 0);
+  $('#mb-res').className = R.result >= 0 ? 'tone-good' : 'tone-bad';
+  $('#mb-cost').textContent = eur(R.avgCost, 2);
+  $('#mb-occ').textContent = isFinite(R.occ) ? pct(R.occ) : '—';
+
+  drawCurve(R);
+}
+
+/* ---------- Courbe ---------- */
+function niceStep(range, target) {
+  const raw = range / Math.max(1, target), mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+}
+let curveData = null;
+function drawCurve(R) {
+  const box = $('#curve');
+  if (!R.curve) { box.innerHTML = '<p class="empty">Indiquez des ventes de pièces pour voir la courbe.</p>'; curveData = null; return; }
+  const W = Math.max(280, Math.round(box.clientWidth || 420)), H = 236;
+  const m = {l: 62, r: 12, t: 22, b: 30};
+  const pts = R.curve.pts, xMax = R.curve.xMax;
+  let yMin = Math.min(0, ...pts.map(p => p.y)), yMax = Math.max(0, ...pts.map(p => p.y));
+  if (yMax - yMin < 1) yMax = yMin + 100;
+  const ys = niceStep(yMax - yMin, 4); yMin = Math.floor(yMin / ys) * ys; yMax = Math.ceil(yMax / ys) * ys;
+  const xs = niceStep(xMax, 5);
+  const X = x => m.l + x / xMax * (W - m.l - m.r), Y = y => m.t + (yMax - y) / (yMax - yMin) * (H - m.t - m.b);
+  const yfmt = v => Math.abs(yMax - yMin) >= 20000 ? `${n0(v / 1000)} k€` : eur(v, 0);
+  let g = '';
+  for (let v = yMin; v <= yMax + 1e-6; v += ys) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="${Math.abs(v) < 1e-6 ? 'var(--axis)' : 'var(--grid)'}" stroke-width="1"/><text x="${m.l - 8}" y="${Y(v) + 4}" text-anchor="end">${yfmt(v)}</text>`;
+  for (let v = 0; v <= xMax + 1e-6; v += xs) g += `<text x="${X(v)}" y="${H - m.b + 18}" text-anchor="middle">${n0(v)}</text>`;
+  const cap = Math.min(R.capFour ?? Infinity, R.capTemps ?? Infinity);
+  let shade = '';
+  if (isFinite(cap) && cap < xMax) shade = `<rect x="${X(cap)}" y="${m.t}" width="${Math.max(0, W - m.r - X(cap))}" height="${H - m.t - m.b}" fill="var(--bad-soft)" opacity=".7"/>`;
+  const vline = (x, label, anchorRight) => (x != null && isFinite(x) && x <= xMax) ? `<line x1="${X(x)}" x2="${X(x)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink-2)" stroke-width="1"/><text class="lbl-ink" x="${X(x) + (anchorRight ? -4 : 4)}" y="${m.t - 7}" text-anchor="${anchorRight ? 'end' : 'start'}">${label}</text>` : '';
+  const caps = [[R.capFour, 'Four plein'], [R.capTemps, 'Temps plein']].filter(([c]) => c != null && isFinite(c) && c <= xMax).sort((a, b) => a[0] - b[0]);
+  let lines = '';
+  caps.forEach(([c, label], i) => {
+    const other = caps[1 - i];
+    const close = other && Math.abs(X(other[0]) - X(c)) < 90;
+    const right = close ? i === 0 : X(c) > W - 110;
+    lines += vline(c, label, right);
+  });
+  const split = isFinite(cap) ? cap : Infinity;
+  const pathOf = arr => arr.map((p, i) => `${i ? 'L' : 'M'}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join('');
+  const inside = pts.filter(p => p.x <= split + 1e-9), outside = pts.filter(p => p.x >= split - xMax / 140);
+  let path = `<path d="${pathOf(inside)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (outside.length > 1 && isFinite(split)) path += `<path d="${pathOf(outside)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".7"/>`;
+  let marks = '';
+  if (R.breakEven != null && R.breakEven > 0 && R.breakEven <= xMax) marks += `<circle cx="${X(R.breakEven)}" cy="${Y(0)}" r="4.5" fill="var(--ink)" stroke="var(--panel)" stroke-width="2"/><text class="lbl-ink" x="${X(R.breakEven) + 8}" y="${Y(0) + (Y(0) > H - m.b - 20 ? -8 : 16)}">Point mort</text>`;
+  const cx = X(R.qTot), cy = Y(R.result);
+  marks += `<circle cx="${cx}" cy="${cy}" r="5.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/><text class="lbl-ink" x="${cx + (cx > W - 120 ? -9 : 9)}" y="${cy - 9}" text-anchor="${cx > W - 120 ? 'end' : 'start'}">Votre plan</text>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Résultat mensuel selon le nombre de pièces vendues par mois. Point mort : ${R.breakEven != null ? n0(R.breakEven) : 'non atteint'} pièces. Capacité du four : ${R.capFour != null ? n0(R.capFour) : '—'} pièces.">
+    ${shade}${g}${lines}${path}${marks}
+    <text x="${W - m.r}" y="${H - 2}" text-anchor="end">pièces vendues par mois</text>
+    <line id="cv-x" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink-2)" stroke-width="1" visibility="hidden"/>
+    <circle id="cv-dot" r="4.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2" visibility="hidden"/>
+    <rect id="cv-hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/>
+  </svg>`;
+  curveData = {pts, X, Y, m, W, cap};
+  $('#curve-cap').textContent = isFinite(cap) && cap < xMax
+    ? 'Résultat mensuel selon le volume vendu, même répartition entre les pièces. La zone teintée dépasse votre capacité.'
+    : 'Résultat mensuel selon le volume vendu, même répartition entre les pièces.';
+}
+
+/* ---------- Infobulles ---------- */
+const tip = $('#tip');
+const showTip = (html, x, y) => {
+  tip.innerHTML = html; tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  let left = x + 14, top = y - r.height - 10;
+  if (left + r.width > window.innerWidth - 8) left = x - r.width - 14;
+  if (top < 8) top = y + 16;
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+};
+const hideTip = () => { tip.hidden = true; };
+document.addEventListener('pointermove', e => {
+  const seg = e.target.closest && e.target.closest('[data-tip]');
+  if (seg) { showTip(esc(seg.dataset.tip), e.clientX, e.clientY); return; }
+  if (e.target.id === 'cv-hit' && curveData) {
+    const svg = e.target.ownerSVGElement, pt = svg.getBoundingClientRect();
+    const sx = (e.clientX - pt.left) * (curveData.W / pt.width);
+    let best = curveData.pts[0], bd = Infinity;
+    for (const p of curveData.pts) { const d = Math.abs(curveData.X(p.x) - sx); if (d < bd) { bd = d; best = p; } }
+    const vx = $('#cv-x'), dot = $('#cv-dot');
+    vx.setAttribute('x1', curveData.X(best.x)); vx.setAttribute('x2', curveData.X(best.x)); vx.setAttribute('visibility', 'visible');
+    dot.setAttribute('cx', curveData.X(best.x)); dot.setAttribute('cy', curveData.Y(best.y)); dot.setAttribute('visibility', 'visible');
+    const over = best.x > curveData.cap + 1e-9 ? '<br>Au-delà de votre capacité' : '';
+    showTip(`<b>${n0(best.x)} pièces / mois</b><br>Résultat ${eur(best.y, 0)}<br>${best.nB} biscuits + ${best.nE} émaux · four ${pct(best.occ)}${over}`, e.clientX, e.clientY);
+    return;
+  }
+  if (!tip.hidden) { hideTip(); const vx = $('#cv-x'), dot = $('#cv-dot'); if (vx) vx.setAttribute('visibility', 'hidden'); if (dot) dot.setAttribute('visibility', 'hidden'); }
+});
+document.addEventListener('pointerleave', hideTip);
+
+/* ---------- Mise à jour ---------- */
+let raf = 0, lastR = null;
+function update() {
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(() => {
+    const R = analyze(state);
+    lastR = R;
+    updatePieceVisuals(R);
+    updateRecipe();
+    updateEquip(R);
+    renderResults(R);
+    $('#elec-advice').textContent = (() => { const ab = aboFor(num(state.four.puissance)); return `Pour ${n1(num(state.four.puissance))} kW de four plus le reste de l’atelier, prévoyez un compteur d’au moins ${ab.kva} kVA${ab.over ? ' (au-delà de 36 kVA : contrat professionnel)' : ''}.`; })();
+    renderChips();
+    save();
+  });
+}
+function renderAll() { renderPieces(); renderRecipe(); renderEquip(); syncInputs(); update(); }
+
+/* ---------- Scénarios ---------- */
+let pendingScenario = null;
+function renderChips() {
+  const box = $('#chips');
+  if (!box.children.length) box.innerHTML = Object.entries(SCENARIOS).map(([k, s]) => `<button class="chip" type="button" data-scen="${k}" aria-pressed="false">${s.label}<small>${s.tag}</small></button>`).join('');
+  for (const b of $$('.chip', box)) b.setAttribute('aria-pressed', String(state.scenario === b.dataset.scen));
+}
+function loadScenario(k) { state = makeState(k); pendingScenario = null; $('#confirm').hidden = true; renderAll(); }
+
+/* ---------- Événements ---------- */
+function onField(e) {
+  const t = e.target;
+  if (t.dataset.path) {
+    const path = t.dataset.path;
+    const val = t.type === 'checkbox' ? t.checked : (t.tagName === 'SELECT' ? t.value : num(t.value));
+    setPath(state, path, val);
+    if (path === 'argile.type') { applyClay(state, val); syncInputs(); }
+    else if (path === 'four.preset') { if (val !== 'perso') { applyKiln(state, val); syncInputs(); } }
+    else if (path === 'four.volume') { state.four.preset = 'perso'; deriveFromVolume(state); syncInputs(); }
+    else if (path === 'four.puissance') { state.four.preset = 'perso'; state.elec.abo = aboFor(num(val)).surcout; syncInputs(); }
+    else if (path === 'four.prix') { state.four.preset = 'perso'; syncInputs(); }
+    else if (path === 'email.mode' || path === 'cours.actif') syncInputs();
+    state.dirty = true; update(); return;
+  }
+  if (t.dataset.piece) {
+    const p = state.pieces.find(x => x.id === t.dataset.piece); if (!p) return;
+    const key = t.dataset.key;
+    p[key] = (key === 'nom' || key === 'forme' || key === 'email') ? t.value : num(t.value);
+    state.dirty = true; update(); return;
+  }
+  if (t.dataset.eq) {
+    const it = state.equip.find(x => x.id === t.dataset.eq); if (!it) return;
+    const key = t.dataset.key;
+    it[key] = key === 'actif' ? t.checked : key === 'nom' ? t.value : num(t.value);
+    state.dirty = true; update(); return;
+  }
+  if (t.dataset.rec) {
+    const arr = state.email[t.dataset.rec]; const it = arr.find(x => x.id === t.dataset.id); if (!it) return;
+    it[t.dataset.key] = t.dataset.key === 'nom' ? t.value : num(t.value);
+    state.dirty = true; update(); return;
+  }
+  if (t.id === 'add-base' || t.id === 'add-ajout') {
+    if (t.value === '') return;
+    const src = t.id === 'add-base' ? MAT_BASE : MAT_AJOUT, arr = t.id === 'add-base' ? state.email.base : state.email.ajouts;
+    const [nom, prix] = src[+t.value];
+    arr.push({id: uid('m'), nom, part: t.id === 'add-base' ? 5 : 1, prix});
+    t.value = ''; state.dirty = true; renderRecipe(); update();
+  }
+}
+document.addEventListener('input', onField);
+document.addEventListener('change', e => { if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox') onField(e); });
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tab) { selectTab(b.dataset.tab); return; }
+  if (b.dataset.scen) {
+    const k = b.dataset.scen;
+    if (state.dirty) { pendingScenario = k; $('#confirm-text').textContent = `Remplacer tous vos réglages par le scénario « ${SCENARIOS[k].label} » ?`; $('#confirm').hidden = false; $('#confirm-yes').focus(); }
+    else loadScenario(k);
+    return;
+  }
+  if (b.id === 'confirm-yes' && pendingScenario) { loadScenario(pendingScenario); return; }
+  if (b.id === 'confirm-no') { pendingScenario = null; $('#confirm').hidden = true; return; }
+  if (b.dataset.addPiece) {
+    const t = PIECE_T[b.dataset.addPiece];
+    state.pieces.push({id: uid('p'), ...t});
+    state.dirty = true; renderPieces(); update();
+    const last = state.pieces[state.pieces.length - 1];
+    requestAnimationFrame(() => { const el = $('#pn-' + last.id); if (el) { el.scrollIntoView({block: 'center', behavior: 'smooth'}); el.focus({preventScroll: true}); } });
+    return;
+  }
+  if (b.dataset.act === 'dup') {
+    const i = state.pieces.findIndex(x => x.id === b.dataset.id); if (i < 0) return;
+    const c = {...state.pieces[i], id: uid('p'), nom: state.pieces[i].nom + ' (copie)'};
+    state.pieces.splice(i + 1, 0, c); state.dirty = true; renderPieces(); update(); return;
+  }
+  if (b.dataset.act === 'del-piece') { state.pieces = state.pieces.filter(x => x.id !== b.dataset.id); state.dirty = true; renderPieces(); update(); return; }
+  if (b.dataset.act === 'del-eq') { state.equip = state.equip.filter(x => x.id !== b.dataset.id); state.dirty = true; renderEquip(); update(); return; }
+  if (b.dataset.act === 'del-rec') { const k = b.dataset.kind; state.email[k] = state.email[k].filter(x => x.id !== b.dataset.id); state.dirty = true; renderRecipe(); update(); return; }
+  if (b.id === 'add-equip') {
+    const it = {id: uid('e'), nom: 'Nouvel équipement', prix: 100, qte: 1, amort: 5, actif: true};
+    state.equip.push(it); state.dirty = true; renderEquip(); update();
+    requestAnimationFrame(() => { const el = $('#eq-' + it.id + '-nom'); if (el) { el.focus(); el.select(); } });
+    return;
+  }
+  if (b.id === 'mb-go') { $('#results').scrollIntoView({behavior: 'smooth', block: 'start'}); }
+});
+
+const TABKEY = 'atelier-ceramique-tab';
+function selectTab(name) {
+  for (const t of $$('.tab')) { const on = t.dataset.tab === name; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; $('#panel-' + t.dataset.tab).hidden = !on; }
+  try { localStorage.setItem(TABKEY, name); } catch (e) {}
+}
+$('#tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const tabs = $$('.tab'), i = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+  const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+  selectTab(n.dataset.tab); n.focus(); e.preventDefault();
+});
+let startTab = 'pieces';
+try { const t = localStorage.getItem(TABKEY); if (t && $('#panel-' + t)) startTab = t; } catch (e) {}
+selectTab(startTab);
+
+fillAddSelects();
+renderChips();
+renderAll();
+if (window.ResizeObserver) { let w = 0; new ResizeObserver(en => { const nw = Math.round(en[0].contentRect.width); if (nw !== w) { w = nw; if (lastR) drawCurve(lastR); } }).observe($('#curve')); }
+})();
+</script>
+</body>
+</html>
